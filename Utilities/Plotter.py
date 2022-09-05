@@ -170,7 +170,7 @@ def HNL_scaling_calculator(samples=[], sample_norms=[]): #Prints the value which
 
 # def Plot_BDT_input():
 
-def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True):
+def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, Run="_"):
     
     if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
     if(samples==[]): raise Exception("Specify samples")
@@ -202,7 +202,7 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
               weights=bkg_weights, color=bkg_colors, alpha=ALPHA)
         
         #plt.hist(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms['overlay_test'],bins=bins,range=xlims, color=colours['overlay_test'], lw=2, edgecolor="black", label='Neutrino bkg', alpha=ALPHA)
-        plt.hist(samples[HNL_mass][f'BDT_output'],weights=sample_norms[HNL_mass],bins=bins,range=xlims,
+        plt.hist(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[HNL_mass],bins=bins,range=xlims,
                  lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
         #plt.hist(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms['dirtoverlay'],bins=20,range = [0.0,1.0], color=colours['dirtoverlay'], lw=2, edgecolor="black", label='Dirt bkg', alpha=ALPHA)
         #plt.hist(samples['beamoff'][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms['beamoff'],bins=20,range = [0.0,1.0], color=colours['beamoff'], lw=2, edgecolor="black", label=f'EXT bkg', alpha=ALPHA)
@@ -213,9 +213,11 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
         plt.ylabel('Events', fontsize=30)
         plt.rcParams.update({'font.size': 30})
         plt.yscale(logscale)
+        if savefig == True:
+            plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + ".png")
         plt.show()
         
-            
+                    
 # def Plot_systematics():
     
 # def Plot_Final_Limit():

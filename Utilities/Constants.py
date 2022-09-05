@@ -1,3 +1,10 @@
+sample_type = {"overlay":"MC",
+              "dirtoverlay":"MC",
+              "beamoff":"data",
+              "signal":"MC_signal"}
+
+root_dir = 'nuselection'
+main_tree = 'NeutrinoSelectionFilter'
 
 Preselection_dict = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",
@@ -37,6 +44,18 @@ SF_dirt_run1 = 0.08961042442406035
 SF_EXT_run1 = 0.5612087579382191
 SF_signal_run1_100MeV = 6.913852627300102e-08
 
+run1_overlay_detvar_POT = {"WireModX":3.67e20, #Should check these with POT script, just taken from spreadsheet atm
+                           "WireModYZ":3.7e20,
+                           "WireModThetaXZ":3.68e20,
+                           "WireModThetaYZ":3.69e20,
+                           "WireModdEdX":3.67e20,
+                           "LYDown":3.57e20,
+                           "LYRayleigh":3.69e20,
+                           "LYAttenuation":3.64e20,
+                           "SCE":3.71e20,
+                           "Recomb2":3.72e20,
+                           "CV":3.69e20}
+                           
 run3_POT_scaling_dict = {20: 1.7657423469953374e-12, 
                          50: 5.448786613287057e-10, 
                          100: 5.5322831399190343e-08, 
@@ -53,6 +72,13 @@ sample_colours = {'overlay':'peru',
                   'beamoff':'deepskyblue',
                   'signal':'red'}
 
+Multisim_univs = {"weightsPPFX":600,
+                  "weightsGenie":600,
+                  "weightsReint":1000}
+
+Detector_variations = ["WireModX", "WireModYZ", "WireModThetaXZ", "WireModThetaYZ", "WireModdEdX",
+                       "LYDown", "LYRayleigh", "LYAttenuation", "SCE", "Recomb2", "CV"]
+
 ##TPC
 TPCxlo=0
 TPCxhi=256
@@ -60,58 +86,4 @@ TPCylo=-115
 TPCyhi=117
 TPCzlo=0
 TPCzhi=1037
-
-
-
-bdt_cols_all=[
-    'n_tracks',
- 'n_showers',
-    'topological_score',
-    'NeutrinoEnergy2',
-    'trk1_len_v','trk2_len_v',
-    "trk1_dect_phi",
-    "trk1_dect_theta",
-    'trk1_llr_pid_score_v',  'trk2_llr_pid_score_v',  
-    'trk1_score_v', 'trk2_score_v',
-          'cosangle',
-       'max_x','min_x',  
-    'max_y','max_z', 
-         'min_y', 'min_z']
-
-bdt_cols_hps=bdt_cols_all+[
-    
-    "Inv_mumu",
-    "Ang_with_scalar_mumu"
-]
-
-bdt_cols_hnl=bdt_cols_all+[
-    "Inv_mupi",
-    "Ang_with_scalar_mupi"
-]
-
-#these are the additional scalings (to mixing angle squared. ie theta^2 ie mumix^2) produced by Collie which must be applied to find the final exlclued normlastion.
-
-scaling_dict={
-    "212":30.83,
-    "215":12.10,
-    "230":2.83,
-    "245":1.36,
-    "260":1.18,
-    "269":0.85,
-    "275":0.82,
-    "279":0.99,
-    "246":12.91,
-    "250":8.57,
-    "277":3.05,
-    "304":1.46,
-    "331":0.85,
-    "358":0.54,
-    "385":0.92,
-    "263p5":3.86,
-    "290p5":1.91,
-    "317p5":1.18,
-    "344p5":0.67,
-    "371p5":0.81}
-
-
 

@@ -12,7 +12,7 @@ track_vars = ['trk_len_v', 'trk_theta_v', 'trk_phi_v', 'trk_energy', 'trk_energy
              'trk_chipr_best','trk_bragg_p_v', 'trk_bragg_mip_v', 'trk_hits_max', 'trk_start_x_v', 'trk_start_y_v', 'trk_start_z_v', 
              'trk_end_x_v', 'trk_end_y_v', 'trk_end_z_v', 'trk_dir_x_v', 'trk_dir_y_v', 'trk_dir_z_v', 
              'trk_calo_energy_y_v','trk_calo_energy_u_v','trk_calo_energy_v_v']
-             #'all_trk_energies']
+             #'all_trk_energies'] #To include this I think I need to resize the dataframe somehow so it can be flattened
 
 multiplicity_vars = ['nslice', 'n_pfps', 'n_tracks', 'n_showers']
 
@@ -28,10 +28,11 @@ all_other_vars = ['merge_bestdot', 'merge_bestdist', 'merge_vtx_x', 'merge_vtx_y
 
 weight_related = ['weightSplineTimesTune', 'ppfx_cv', 'npi0'] #For MC only, includes true npi0 for scaling
 
+sys_vars = ["weightsPPFX","weightsGenie","weightsReint"]
+
 First_pass_vars = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars
 First_pass_vars_MC = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars + weight_related
 First_pass_vars_for_BDT = shower_vars + track_vars + multiplicity_vars + all_other_vars
-
 
 #Variables used in Pre-selection
 
