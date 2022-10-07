@@ -40,3 +40,6 @@ Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy
 Preselection_vars_MC = Preselection_vars + weight_related
 Preselection_vars_CRT = Preselection_vars+["crtveto"]
 Preselection_vars_CRT_MC = Preselection_vars_CRT+weight_related
+
+Truth_vars = ['mc_pdg','mc_E','mc_vx','mc_vy','mc_vz','mc_endx','mc_endy','mc_endz','mc_px','mc_py','mc_pz',
+              'mc_primary_pdg','mc_primary_px','mc_primary_py','mc_primary_pz','mc_completeness','mc_purity','npi0']

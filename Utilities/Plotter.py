@@ -79,15 +79,11 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
             if(offbkg[i]>1 or overlaybkg[i]>1):
                 bins_new.append(bins[i])
                 
-#             else:
-#                 print("empty bin,",bins[i],bins[i+1])
         bins_new.append(bins[-1])
 
         bins=bins_new
     
     fig,ax = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=figsize,dpi=dpi)
-    
-    #plt.sca(ax[0])
         
     if(discrete):
         bins = np.arange(xlims[0], xlims[1] + 1.5) - 0.5
@@ -119,7 +115,6 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     bkg_stack=varis
     bkg_stack_w=weights
     plt.hist(var_HNL,
-#               label=[f"HNL ({mass} MeV) \n $|U_{{\mu4}}|^2="+sci_notation(sample_info["300"]["theta_u2"]) +f" (x{HNLplotscale})"],
               label=[f"{HNL_mass} MeV HNL ({HNL_num:.1f})"],
               range=xlims,bins=bins,
               stacked=True,density=density,
@@ -201,11 +196,8 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
               stacked=True,linewidth=2,edgecolor="black",
               weights=bkg_weights, color=bkg_colors, alpha=ALPHA)
         
-        #plt.hist(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms['overlay_test'],bins=bins,range=xlims, color=colours['overlay_test'], lw=2, edgecolor="black", label='Neutrino bkg', alpha=ALPHA)
         plt.hist(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[HNL_mass],bins=bins,range=xlims,
                  lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
-        #plt.hist(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms['dirtoverlay'],bins=20,range = [0.0,1.0], color=colours['dirtoverlay'], lw=2, edgecolor="black", label='Dirt bkg', alpha=ALPHA)
-        #plt.hist(samples['beamoff'][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms['beamoff'],bins=20,range = [0.0,1.0], color=colours['beamoff'], lw=2, edgecolor="black", label=f'EXT bkg', alpha=ALPHA)
         
         plt.legend(loc=legloc,frameon=True)
         
