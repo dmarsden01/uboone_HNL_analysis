@@ -43,6 +43,11 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         samples.extend(["pi0_signal"])
     if Params["Load_DetVars"] == True:
         samples.extend(Constants.Detector_variations)
+    if Params["Load_Signal_DetVars"] == True:
+        # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
+        for HNL_mass in [150]:
+            for DetVar in Constants.Detector_variations:
+                samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
         samples.extend(["beamgood"])
         
@@ -133,6 +138,22 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                 del(file)
             print("Pickling "+Params["Run"]+f" overlay {sample} file")
             new_overlay.to_pickle(loc_pkls+"DetVars/overlay_"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+".pkl")
+            del(new_overlay)
+        elif Params["Load_Signal_DetVars"] == True: #I should ONLY load these samples in this case.
+            NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
+            df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
+            file = df_signal
+            make_unique_ev_id(file) #This creates "rse_id" branch
+            if Params["Only_keep_common_DetVar_evs"] == True:
+                filtered = file.loc[(file['rse_id'].isin(common_evs['rse_id']))]
+                new_overlay = filtered.copy()
+                del(file)
+                del(filtered)
+            else:
+                new_overlay = file.copy()
+                del(file)
+            #new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+".pkl")
+            new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+".pkl")
             del(new_overlay)
         else: #Standard sample types
             print(f"Loading {sample} "+Params["Run"]+" file(s) with uproot")
@@ -244,13 +265,38 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
     samples = [] #A list of all the samples which will be loaded and pickled
     if Params["Load_standard"] == True:
         samples.extend(["overlay","dirtoverlay","beamoff"])
+    if Params["Load_lepton_signal"] == True:
         samples.extend(Constants.HNL_mass_samples)
+    if Params["Load_pi0_signal"] == True:
+        for HNL_mass in Constants.HNL_mass_pi0_samples:
+            samples+=[str(HNL_mass)+"_pi0"]
     if Params["Load_DetVars"] == True: #This is overlay DetVars
         samples.extend(Constants.Detector_variations)
+    if Params["Load_Signal_DetVars"] == True:
+        # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
+        for HNL_mass in [150]:
+            for DetVar in Constants.Detector_variations:
+                samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
         samples.extend(["beamgood"])
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
+    
+    return samples
+
+def create_sig_detsys_samples_list(Params): #Returns the list of samples to run over
+    samples = [] #A list of all the samples which will be loaded and pickled
+    # for HNL_mass in Constants.HNL_mass_samples:
+    for HNL_mass in [150]: #While I only have 150MeV sample
+        for DetVar in Constants.Detector_variations:
+            samples+=[str(HNL_mass)+"_"+DetVar]
+        
+    print(f"Loading these "+Params["Run"]+" samples: " + "\n")
+    print(samples)
+    
+    if Params["Use_logit"] == True:
+        Params["logit_str"] = "logit"
+    else: Params["logit_str"] = "standard"
     
     return samples
 
@@ -281,8 +327,33 @@ def SaveToRoot(nbins,xlims,bkg_overlay,bkg_dirt,bkg_EXT,sig,data,fileName='test.
         tData5.SetBinError(i+1,data['err'][i])
     rFile.Write()
     rFile.Close()
+
+#Logistic transformations for BDT scores
+def logit(x): #The "logit" function, also known as the inverse of the logistic function
+    return np.log(x/(1-x))
+
+def invlogit(x): #The "logistic" function, also known as the inverse of the "logit" function
+    return np.exp(x)/(1+np.exp(x))
     
 #Limit setting functions    
+def pyhf_params(Params):
+    if Params["Stats_only"] == True:
+        print("Calculating stats-only limit.")
+    elif Params["Use_flat_sys_bkg"] == True:
+        print("Using FLAT systematic uncertainty on background")
+        perc_overlay = Params["Flat_overlay_bkg_frac"]*100
+        perc_dirt = Params["Flat_dirt_bkg_frac"]*100
+        print("With " + str(perc_overlay) + "% on overlay, and " + str(perc_dirt) + "% on dirt.")
+    else: 
+        print("Using fully evaluated systematic uncertainty for background. Dirt will still be 100%.")
+    if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == True):
+        print("Using FLAT systematic uncertainty on signal")
+        perc_signal = Params["Flat_sig_frac"]*100
+        print("With " + str(perc_signal) + "% on all signal")
+    if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == False):
+        perc_flux = Params["Signal_flux_error"]*100
+        print(f"Using fully evaluated systematic uncertainty for signal. Using {perc_flux}% flux error.")
+
 def add_hists_vals(hist_list):
     Total_hist = np.zeros_like(hist_list[0].values())
     for hist in hist_list:
@@ -364,6 +435,99 @@ def remove_first_half_hist(hist_list):
     slice_at = int(np.floor(length/2))
     sliced_hist = hist_list[slice_at:]
     return sliced_hist
+
+def Calculate_total_uncertainty(Params, hist_dict, bkg_reweight_err_dict=None, bkg_detvar_dict=None, sig_detvar_dict=None): #Takes the dictionary of all root files
+    BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
+    for HNL_mass in Constants.HNL_mass_samples:
+        bkg_stat_err_list = [hist_dict[HNL_mass]['bkg_overlay'].errors(), 
+                             hist_dict[HNL_mass]['bkg_EXT'].errors(), 
+                             hist_dict[HNL_mass]['bkg_dirt'].errors()]
+        sig_stat_err = hist_dict[HNL_mass]['Signal'].errors()
+        if Params["Stats_only"] == True:
+        #As default the errors saved in the files are stat errors, this will change once I properly calculate them
+            bkg_err_list = bkg_stat_err_list
+            sig_err = sig_stat_err
+        elif Params["Use_flat_sys_bkg"] == True:
+            bkg_sys_err_list = [hist_dict[HNL_mass]['bkg_overlay'].values()*Params["Flat_overlay_bkg_frac"], 
+                                np.zeros_like(hist_dict[HNL_mass]['bkg_EXT'].errors()), #No systematic error on the EXT sample
+                                hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]]
+            bkg_err_list = [add_all_errors([bkg_stat_err_list[0],bkg_sys_err_list[0]]), #adding the sys and stat error in quadrature for each bkg type
+                            add_all_errors([bkg_stat_err_list[1],bkg_sys_err_list[1]]),
+                            add_all_errors([bkg_stat_err_list[2],bkg_sys_err_list[2]])]
+        elif Params["Use_flat_sys_bkg"] == False:
+            ppfx_unc = bkg_reweight_err_dict[HNL_mass]["ppfx_uncertainty"].values()
+            genie_unc = bkg_reweight_err_dict[HNL_mass]["Genie_uncertainty"].values()
+            reint_unc = bkg_reweight_err_dict[HNL_mass]["Reinteraction_uncertainty"].values()
+            detvar_unc = bkg_detvar_dict[HNL_mass]["Total_DetVar_uncertainty"].values() #Don't know what this looks like yet, as I haven't made
+            tot_overlay_sys = add_all_errors([ppfx_unc, genie_unc, reint_unc, detvar_unc])
+            bkg_sys_err_list = [tot_overlay_sys, 
+                                0, #No systematic error on the EXT sample
+                                hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]] #Don't have reweight or DetVar samples for dirt
+            bkg_err_list = [add_all_errors([bkg_stat_err_list[0],bkg_sys_err_list[0]]), #adding the sys and stat error in quadrature for each bkg type
+                            add_all_errors([bkg_stat_err_list[1],bkg_sys_err_list[1]]),
+                            add_all_errors([bkg_stat_err_list[2],bkg_sys_err_list[2]])]
+        if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == True):
+            sig_sys_err = hist_dict[HNL_mass]['Signal'].values()*Params["Flat_sig_frac"]
+            sig_err = add_all_errors([sig_stat_err,sig_sys_err])
+        if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == False):
+            sig_detvar_err = sig_detvar_dict[HNL_mass]["Total_DetVar_uncertainty"].values()
+            sig_flux_err = hist_dict[HNL_mass]['Signal'].values()*Params["Flat_overlay_bkg_frac"]
+            sig_err = add_all_errors([sig_stat_err,sig_detvar_err,sig_flux_err]) #Adding stat, detvar and flux errors in quadrature
+        total_bkg_err = add_all_errors(bkg_err_list) #Now adding the errors of overlay, EXT and dirt in quadrature
+        BKG_ERR_dict[HNL_mass] = total_bkg_err
+        SIGNAL_ERR_dict[HNL_mass] = sig_err
+    return BKG_ERR_dict, SIGNAL_ERR_dict
+
+def Make_into_lists(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict):
+    
+    def remove_first_half_hist(hist_list):
+        length = len(hist_list)
+        slice_at = int(np.floor(length/2))
+        sliced_hist = hist_list[slice_at:]
+        return sliced_hist
+    
+    BKG_dict_FINAL, BKG_ERR_dict_FINAL, SIGNAL_dict_FINAL, SIGNAL_ERR_dict_FINAL = {}, {}, {}, {}
+    for HNL_mass in Constants.HNL_mass_samples:
+        BKG = np.ndarray.tolist(BKG_dict[HNL_mass])
+        BKG_ERR = np.ndarray.tolist(BKG_ERR_dict[HNL_mass])
+        SIGNAL = np.ndarray.tolist(SIGNAL_dict[HNL_mass])
+        SIGNAL_ERR = np.ndarray.tolist(SIGNAL_ERR_dict[HNL_mass])
+        if Params["Use_second_half_only"] == True:
+            BKG=remove_first_half_hist(BKG)
+            BKG_ERR=remove_first_half_hist(BKG_ERR)
+            SIGNAL=remove_first_half_hist(SIGNAL)
+            SIGNAL_ERR=remove_first_half_hist(SIGNAL_ERR)
+            
+        BKG_dict_FINAL[HNL_mass] = BKG
+        BKG_ERR_dict_FINAL[HNL_mass] = BKG_ERR
+        SIGNAL_dict_FINAL[HNL_mass] = SIGNAL
+        SIGNAL_ERR_dict_FINAL[HNL_mass] = SIGNAL_ERR
+        
+    output_dict = {"BKG_dict":BKG_dict_FINAL, "BKG_ERR_dict":BKG_ERR_dict_FINAL, 
+                   "SIGNAL_dict":SIGNAL_dict_FINAL, "SIGNAL_ERR_dict":SIGNAL_ERR_dict_FINAL}
+        
+    return output_dict
+
+def Create_final_appended_runs_dict(list_input_dicts):
+    
+    def append_list_of_lists(input_list):
+        output_list = []
+        for i in range(len(input_list)):
+            output_list = output_list + input_list[i]
+        return output_list
+
+    Total_dict = {}
+    for HNL_mass in Constants.HNL_mass_samples:
+        Appended_dict = {}
+        for dict_type in list_input_dicts[0].keys():
+            list_placeholder = []
+            for input_dict in list_input_dicts: #This loops over the dicts for different runs
+                list_placeholder.append(input_dict[dict_type][HNL_mass]) 
+            Appended = append_list_of_lists(list_placeholder)
+            Appended_dict[dict_type] = Appended
+        Total_dict[HNL_mass] = Appended_dict
+    print(Total_dict.keys())
+    return Total_dict
     
 def check_duplicate_events(df):
     rse_list = df['rse_id'].to_list()
