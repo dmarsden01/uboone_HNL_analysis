@@ -15,9 +15,20 @@ Preselection_dict = {"nslice":"nslice==1",
 "n_pfps":"n_pfps < 6"
 }#want to add topological score, maybe a cut to keep below 0.96
 
+Preselection_dict_pi0 = {"nslice":"nslice==1",
+"flash_time":"flash_time > 6.55 and flash_time < 16.5",
+"nu_flashmatch_score":"nu_flashmatch_score < 15",
+"NeutrinoEnergy2":"NeutrinoEnergy2 < 400",
+"contained_fraction":"contained_fraction > 0.9",
+"trk_score_v":"trk_score_v < 0.97",
+"n_pfps":"n_pfps < 6",
+"topological_score":"topological_score < 0.95",
+"shr_tkfit_phi_v":"shr_tkfit_phi_v < -1.0 or shr_tkfit_phi_v > 0.5"
+}
+
 Preselection_dict_for_plot = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",
-"nu_flashmatch_score":"nu_flashmatch_score < 15",#may need to take out.
+"nu_flashmatch_score":"nu_flashmatch_score < 15",
 "NeutrinoEnergy2":"NeutrinoEnergy2 < 500",
 "contained_fraction":"contained_fraction > 0.9",
 "trk_score":"trk_score < 0.97",
