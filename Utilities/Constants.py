@@ -37,14 +37,42 @@ Preselection_dict_for_plot = {"nslice":"nslice==1",
 
 Preselection_dict_crtveto = {"crtveto":"crtveto==0"}
 
+Old_generator_mass_points = [20, 50, 100, 150, 180, 200] #These are the samples created with the OLD generator (both run1 and run3) 
+    
+Old_gen_HNL_scalings = {20:1228.625, #Scalings Pawel sent to use for the HNL samples created with the old generator version
+                       50:199.4745, #These may not direclty work because the different BR will also affect the number which decay away before reaching uboone
+                       100:49.9434,
+                       150:22.19445,
+                       180:15.43885,
+                       200:12.49565}
+
 HNL_mass_samples = [20, 50, 100, 150, 180, 200] #This are the current mass points for decays to e+e-
 HNL_mass_pi0_samples = [150]
 
-theta_mu_4 = 1e-4 #This is the same for all samples and was set in the production .fcls
+theta_mu_4 = 1e-4 #This is the same for *most* of the samples and was set in the production .fcls, now made a new dict because some are higher than this
+theta_mu_4_dict = {2:1e-1,
+                   10:1e-2,
+                   20:1e-4,
+                   50:1e-4,
+                   100:1e-4,
+                   150:1e-4,
+                   180:1e-4,
+                   200:1e-4}
 
 pi0_scaling_factor = 0.759
 
-run1_POT_scaling_dict = {20: 2.1387912933253144e-12, 
+Run1_POT = 2e20 #NEEDS TO BE CHECKED, just taken from the NuMI samples page
+Run3_POT = 5.0e20 #NEEDS TO BE CHECKED, just taken from the NuMI samples page
+OnBeam_EA9CNT_wcut_run1 = 5268051.0 #"Triggers" taken from the NuMI samples page
+OnBeam_EA9CNT_wcut_run3 = 10363728.0 #"Triggers" taken from the NuMI samples page
+BeamOff_scaling_for_nus = 0.98 #This Factor described by Owen: Look in script 1_POT...
+DIRT_run1_scaling = 0.75 #NOT SURE where this comes from, apparently it is standard procedure for NuMI DIRT
+DIRT_run3_scaling = 0.35 #NOT SURE where this comes from, apparently it is standard procedure for NuMI DIRT
+NuMI_KDAR_scaling_run1 = 8.0 #This comes from the discrepancy between numu flux from KDAR dump between Geant4 and MiniBooNE measurement. Taken from Owen's thesis
+NuMI_KDAR_scaling_run3 = 8.6
+
+run1_POT_scaling_dict = {10:4.478610916645953e-06,
+                         20: 2.1387912933253144e-12,
                          50: 6.590170245207509e-10, 
                          100: 6.913852703765691e-08, 
                          150: 3.301953636715338e-06, 

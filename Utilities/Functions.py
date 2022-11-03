@@ -50,6 +50,8 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
                 samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
         samples.extend(["beamgood"])
+    if Params["Load_single_file"] == True:
+        samples = [Params["single_file"]]
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
     
@@ -187,6 +189,21 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                     new_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+".pkl")
                     del(new_signal)
                     
+            if (Params["Load_single_file"] == True) and (isinstance(sample,int)):
+                HNL_mass = sample
+                file_loc = sample_loc["signal"]+f"{HNL_mass}_Umu4_majorana_numi_"+Params["current"]+".root"
+                uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
+                if Params["Load_truth_vars"] == True:
+                    df_signal = uproot_file.pandas.df(Params["variables"] + Variables.Truth_vars, flatten=Params["FLATTEN"])
+                else:
+                    df_signal = uproot_file.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
+                file = df_signal
+                new_signal = file.copy()
+                del(file)
+                print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
+                new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+".pkl")
+                del(new_signal)
+                    
             else:
                 uproot_file = uproot3.open(sample_loc[sample])[Constants.root_dir+'/'+Constants.main_tree]
                 if Constants.sample_type[sample] == "MC":
@@ -279,6 +296,9 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
                 samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
         samples.extend(["beamgood"])
+        
+    if Params["Load_single_file"] == True:
+        samples.extend([Params["single_file"]])
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
     
@@ -487,7 +507,7 @@ def Make_into_lists(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict
         return sliced_hist
     
     BKG_dict_FINAL, BKG_ERR_dict_FINAL, SIGNAL_dict_FINAL, SIGNAL_ERR_dict_FINAL = {}, {}, {}, {}
-    for HNL_mass in Constants.HNL_mass_samples:
+    for HNL_mass in BKG_dict:
         BKG = np.ndarray.tolist(BKG_dict[HNL_mass])
         BKG_ERR = np.ndarray.tolist(BKG_ERR_dict[HNL_mass])
         SIGNAL = np.ndarray.tolist(SIGNAL_dict[HNL_mass])
@@ -517,7 +537,10 @@ def Create_final_appended_runs_dict(list_input_dicts):
         return output_list
 
     Total_dict = {}
-    for HNL_mass in Constants.HNL_mass_samples:
+    all_keys = list(list_input_dicts[0].keys())
+    first_key = all_keys[0]
+    for HNL_mass in list_input_dicts[0][first_key]:
+    # for HNL_mass in Constants.HNL_mass_samples:
         Appended_dict = {}
         for dict_type in list_input_dicts[0].keys():
             list_placeholder = []
