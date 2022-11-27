@@ -40,13 +40,13 @@ Preselection_dict_crtveto = {"crtveto":"crtveto==0"}
 Old_generator_mass_points = [20, 50, 100, 150, 180, 200] #These are the samples created with the OLD generator (both run1 and run3) 
     
 Old_gen_HNL_scalings = {20:1228.625, #Scalings Pawel sent to use for the HNL samples created with the old generator version
-                       50:199.4745, #These may not direclty work because the different BR will also affect the number which decay away before reaching uboone
-                       100:49.9434,
-                       150:22.19445,
-                       180:15.43885,
-                       200:12.49565}
+                        50:199.4745, #These may not direclty work because the different BR will also affect the number which decay away before reaching uboone
+                        100:49.9434,
+                        150:22.19445,
+                        180:15.43885,
+                        200:12.49565}
 
-HNL_mass_samples = [20, 50, 100, 150, 180, 200] #This are the current mass points for decays to e+e-
+HNL_mass_samples = [2, 10, 20, 50, 100, 150, 180, 200, 220, 240, 245] #These are the current mass points for decays to e+e-
 HNL_mass_pi0_samples = [150]
 
 theta_mu_4 = 1e-4 #This is the same for *most* of the samples and was set in the production .fcls, now made a new dict because some are higher than this
@@ -57,7 +57,10 @@ theta_mu_4_dict = {2:1e-1,
                    100:1e-4,
                    150:1e-4,
                    180:1e-4,
-                   200:1e-4}
+                   200:1e-4,
+                   220:1e-4,
+                   240:1e-4,
+                   245:1e-4}
 
 pi0_scaling_factor = 0.759
 
@@ -71,13 +74,17 @@ DIRT_run3_scaling = 0.35 #NOT SURE where this comes from, apparently it is stand
 NuMI_KDAR_scaling_run1 = 8.0 #This comes from the discrepancy between numu flux from KDAR dump between Geant4 and MiniBooNE measurement. Taken from Owen's thesis
 NuMI_KDAR_scaling_run3 = 8.6
 
-run1_POT_scaling_dict = {10:4.478610916645953e-06,
-                         20: 2.1387912933253144e-12,
-                         50: 6.590170245207509e-10, 
-                         100: 6.913852703765691e-08, 
-                         150: 3.301953636715338e-06, 
-                         180: 3.479531678617752e-05, 
-                         200: 9.077313301681812e-05,
+run1_POT_scaling_dict = {2: 2.273110163825259e-06,
+                         10: 4.478610916645953e-06,
+                         20: 2.583047654702099e-12,
+                         50: 8.280121178469969e-10, 
+                         100: 8.031518427782856e-08, 
+                         150: 3.5533992790484712e-06, 
+                         180: 3.373080077973945e-05, 
+                         200: 9.293586743019126e-05,
+                         220: 0.00020120909708414096,
+                         240: 0.0004102200024715987,
+                         245: 0.0004631133119186411,
                          "150_pi0": 4.159838350914407e-06}
 
 SF_overlay_run1 = 0.08559729531465318
@@ -85,7 +92,7 @@ SF_dirt_run1 = 0.08961042442406035
 SF_EXT_run1 = 0.5612087579382191
 SF_signal_run1_100MeV = 6.913852627300102e-08
 
-run1_overlay_detvar_POT = {"WireModX":3.67e20, #Should check these with POT script, just taken from spreadsheet atm
+run1_overlay_detvar_POT = {"WireModX":3.67e20, #Just taken from spreadsheet, but matches the POT saved in the Trees
                            "WireModYZ":3.7e20,
                            "WireModThetaXZ":3.68e20,
                            "WireModThetaYZ":3.69e20,
@@ -96,13 +103,30 @@ run1_overlay_detvar_POT = {"WireModX":3.67e20, #Should check these with POT scri
                            "SCE":3.71e20,
                            "Recomb2":3.72e20,
                            "CV":3.69e20}
+
+run3_overlay_detvar_POT = {"WireModX":3.24e20, #Taken from POT counter
+                           "WireModYZ":3.36e20,
+                           "WireModThetaXZ":3.2e20,
+                           "WireModThetaYZ":3.36e20,
+                           "WireModdEdX":3.17e20,
+                           "LYDown":2.81e20,
+                           "LYRayleigh":2.81e20,
+                           "LYAttenuation":3.31e20,
+                           "SCE":3.33e20,
+                           "Recomb2":3.3e20,
+                           "CV":3.72e20}
                            
-run3_POT_scaling_dict = {20: 1.7657423469953374e-12, 
-                         50: 5.448786613287057e-10, 
-                         100: 5.5322831399190343e-08, 
-                         150: 2.623088564712337e-06, 
-                         180: 2.624339736997261e-05, 
-                         200: 7.283055184784342e-05}
+run3_POT_scaling_dict = {2: 4.55623564219535e-06,
+                         10: 8.724043160892894e-06,
+                         20: 5.235714406049288e-12, 
+                         50: 1.6833437060203603e-09, 
+                         100: 1.638766739864928e-07, 
+                         150: 7.045112441597867e-06, 
+                         180: 6.790004454782067e-05, 
+                         200: 0.0001841720407411439,
+                         220: 0.00040388981532410006,
+                         240: 0.0008189646415804218,
+                         245: 0.0009335050190166368}
 
 SF_overlay_run3 = 0.2513368817255014
 SF_dirt_run3 = 0.16953052634982632
@@ -128,3 +152,18 @@ TPCyhi=117
 TPCzlo=0
 TPCzhi=1037
 
+OLD_run1_POT_scaling_dict = {10:4.478610916645953e-06,
+                         20: 2.1387912933253144e-12,
+                         50: 6.590170245207509e-10, 
+                         100: 6.913852703765691e-08, 
+                         150: 3.301953636715338e-06, 
+                         180: 3.479531678617752e-05, 
+                         200: 9.077313301681812e-05,
+                         "150_pi0": 4.159838350914407e-06}
+
+OLD_run3_POT_scaling_dict = {20: 1.7657423469953374e-12, 
+                         50: 5.448786613287057e-10, 
+                         100: 5.5322831399190343e-08, 
+                         150: 2.623088564712337e-06, 
+                         180: 2.624339736997261e-05, 
+                         200: 7.283055184784342e-05}

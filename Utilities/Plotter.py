@@ -166,7 +166,7 @@ def HNL_scaling_calculator(samples=[], sample_norms=[]): #Prints the value which
 
 # def Plot_BDT_input():
 
-def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, Run="_", logit=False, HNL_scale=1.0):
+def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
     
     if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
     if(samples==[]): raise Exception("Specify samples")
@@ -174,7 +174,6 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
                                 'dirtoverlay':Constants.sample_colours['dirtoverlay'],
                                 'beamoff':Constants.sample_colours['beamoff'],
                                 'signal_test':Constants.sample_colours['signal']}
-    
     
     if logy == True:
         logscale="log"
@@ -193,6 +192,22 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
         bkg_weights=[sample_norms['overlay_test'],sample_norms['dirtoverlay'],sample_norms['beamoff']]
         bkg_colors=[colours['overlay_test'],colours['dirtoverlay'],colours['beamoff']]
         labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
+        
+        bins_list = np.histogram(bkg_scores[0],bins=bins,range=xlims)[1] #For mergebins part
+              
+        if(MergeBins): #remove bins with zero bkg prediction
+            totbkg=np.histogram(bkg_scores[0],bins=bins,range=xlims)[0]+np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]+np.histogram(bkg_scores[2],bins=bins,range=xlims)[0]
+            offbkg=np.histogram(bkg_scores[2],bins=bins,range=xlims)[0]
+            overlaybkg=np.histogram(bkg_scores[0],bins=bins,range=xlims)[0]
+            dirtbkg=np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]
+            bins_new=[]
+            for i,bin_bkg in enumerate(totbkg):
+                if(offbkg[i]>1 or overlaybkg[i]>1):
+                    bins_new.append(bins_list[i])
+
+            bins_new.append(bins_list[-1])
+
+            bins=bins_new
         
         plot=plt.hist(bkg_scores,
               label=labels,
@@ -214,7 +229,7 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
         plt.rcParams.update({'font.size': 30})
         plt.yscale(logscale)
         if savefig == True:
-            plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + ".png")
+            plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
         plt.show()
         
                     

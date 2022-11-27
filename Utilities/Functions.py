@@ -45,9 +45,14 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         samples.extend(Constants.Detector_variations)
     if Params["Load_Signal_DetVars"] == True:
         # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
-        for HNL_mass in [150]:
-            for DetVar in Constants.Detector_variations:
-                samples+=[str(HNL_mass)+"_"+DetVar]
+        if Params["Run"] == "run1":
+            for HNL_mass in [150]:
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_"+DetVar]
+        if Params["Run"] == "run3":
+            for HNL_mass in [2]:
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
         samples.extend(["beamgood"])
     if Params["Load_single_file"] == True:
@@ -120,7 +125,7 @@ def make_common_evs_df(df_list):
     print("Length is of common events list is " + str(len(overlapping_df)))
     return overlapping_df
 
-def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
+def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
     for sample in samples: #Looping over all samples, should make a function for this.
         if sample in Constants.Detector_variations: #Checks if it is an overlay Detector Variation sample
             print(f"Loading overlay {sample} "+Params["Run"]+" with uproot")
@@ -139,7 +144,7 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                 new_overlay = file.copy()
                 del(file)
             print("Pickling "+Params["Run"]+f" overlay {sample} file")
-            new_overlay.to_pickle(loc_pkls+"DetVars/overlay_"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+".pkl")
+            new_overlay.to_pickle(loc_pkls+"DetVars/overlay_"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+save_str+".pkl")
             del(new_overlay)
         elif Params["Load_Signal_DetVars"] == True: #I should ONLY load these samples in this case.
             NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
@@ -162,7 +167,7 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
             # if Constants.sample_type[sample] == "MC_signal": #Meant to be only e+e- signal samples
             if sample == "signal": #Meant to be only e+e- signal samples
                 for HNL_mass in Constants.HNL_mass_samples:
-                    file_loc = sample_loc[sample]+f"{HNL_mass}_Umu4_majorana_numi_"+Params["current"]+".root"
+                    file_loc = sample_loc[sample]+f"{HNL_mass}_ee_Umu4_majorana_"+Params["current"]+".root"
                     uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
                     if Params["Load_truth_vars"] == True:
                         df_signal = uproot_file.pandas.df(Params["variables"] + Variables.Truth_vars, flatten=Params["FLATTEN"])
@@ -172,9 +177,9 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                     new_signal = file.copy()
                     del(file)
                     print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
-                    new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+".pkl")
+                    new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
                     del(new_signal)
-            if sample == "pi0_signal":
+            elif sample == "pi0_signal":
                 for HNL_mass in Constants.HNL_mass_pi0_samples:
                     file_loc = sample_loc[sample]+f"{HNL_mass}_Umu4_majorana_numi_"+Params["current"]+".root"
                     uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
@@ -186,10 +191,10 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                     new_signal = file.copy()
                     del(file)
                     print("Pickling "+Params["Run"]+ f" pi0 {HNL_mass}MeV file")
-                    new_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+".pkl")
+                    new_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
                     del(new_signal)
                     
-            if (Params["Load_single_file"] == True) and (isinstance(sample,int)):
+            elif (Params["Load_single_file"] == True) and (isinstance(sample,int)):
                 HNL_mass = sample
                 file_loc = sample_loc["signal"]+f"{HNL_mass}_Umu4_majorana_numi_"+Params["current"]+".root"
                 uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
@@ -201,7 +206,7 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                 new_signal = file.copy()
                 del(file)
                 print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
-                new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+".pkl")
+                new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
                 del(new_signal)
                     
             else:
@@ -217,7 +222,7 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params):
                 new_file = file.copy()
                 del(file)
                 print("Pickling "+Params["Run"] +f" {sample} file")
-                new_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+".pkl")
+                new_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
                 del(new_file)
 
 #POT counting
@@ -307,9 +312,14 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
 def create_sig_detsys_samples_list(Params): #Returns the list of samples to run over
     samples = [] #A list of all the samples which will be loaded and pickled
     # for HNL_mass in Constants.HNL_mass_samples:
-    for HNL_mass in [150]: #While I only have 150MeV sample
-        for DetVar in Constants.Detector_variations:
-            samples+=[str(HNL_mass)+"_"+DetVar]
+    if Params["Run"] == "run1":
+        for HNL_mass in [150]: #While I only have 150MeV sample
+            for DetVar in Constants.Detector_variations:
+                samples+=[str(HNL_mass)+"_"+DetVar]
+    if Params["Run"] == "run3":
+        for HNL_mass in [180]: #While I only have 150MeV sample
+            for DetVar in Constants.Detector_variations:
+                samples+=[str(HNL_mass)+"_"+DetVar]
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n")
     print(samples)
