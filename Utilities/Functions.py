@@ -181,7 +181,7 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     del(new_signal)
             elif sample == "pi0_signal":
                 for HNL_mass in Constants.HNL_mass_pi0_samples:
-                    file_loc = sample_loc[sample]+f"{HNL_mass}_Umu4_majorana_numi_"+Params["current"]+".root"
+                    file_loc = sample_loc[sample]+f"{HNL_mass}_pi0_Umu4_majorana_"+Params["current"]+".root"
                     uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
                     if Params["Load_truth_vars"] == True:
                         df_signal = uproot_file.pandas.df(Params["variables"] + Variables.Truth_vars, flatten=Params["FLATTEN"])

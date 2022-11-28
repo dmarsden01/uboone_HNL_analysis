@@ -47,7 +47,7 @@ Old_gen_HNL_scalings = {20:1228.625, #Scalings Pawel sent to use for the HNL sam
                         200:12.49565}
 
 HNL_mass_samples = [2, 10, 20, 50, 100, 150, 180, 200, 220, 240, 245] #These are the current mass points for decays to e+e-
-HNL_mass_pi0_samples = [150]
+HNL_mass_pi0_samples = [150, 180, 200, 220, 240, 245]
 
 theta_mu_4 = 1e-4 #This is the same for *most* of the samples and was set in the production .fcls, now made a new dict because some are higher than this
 theta_mu_4_dict = {2:1e-1,
@@ -85,7 +85,12 @@ run1_POT_scaling_dict = {2: 2.273110163825259e-06,
                          220: 0.00020120909708414096,
                          240: 0.0004102200024715987,
                          245: 0.0004631133119186411,
-                         "150_pi0": 4.159838350914407e-06}
+                         "150_pi0": 4.159838350914407e-06,
+                         "180_pi0": 3.38744768337177e-05,
+                         "200_pi0": 9.379957491349839e-05,
+                         "220_pi0": 0.00019919442304235102,
+                         "240_pi0": 0.00041190884760711096,
+                         "245_pi0": 0.000458175050366498}
 
 SF_overlay_run1 = 0.08559729531465318
 SF_dirt_run1 = 0.08961042442406035
@@ -143,6 +148,27 @@ Multisim_univs = {"weightsPPFX":600,
 
 Detector_variations = ["WireModX", "WireModYZ", "WireModThetaXZ", "WireModThetaYZ", "WireModdEdX",
                        "LYDown", "LYRayleigh", "LYAttenuation", "SCE", "Recomb2", "CV"]
+#File locations for POT calculations
+
+run1_pi0_file_loc_dict = {"150_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues_KDAR_dump_150_pi0_Umu4_majorana_FHC.root',
+                          "180_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues_KDAR_dump_180_pi0_Umu4_majorana_FHC.root',
+                          "200_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues_KDAR_dump_200_pi0_Umu4_majorana_FHC.root',
+                          "220_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues_KDAR_dump_220_pi0_Umu4_majorana_FHC.root',
+                          "240_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues_KDAR_dump_240_pi0_Umu4_majorana_FHC.root',
+                          "245_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues_KDAR_dump_245_pi0_Umu4_majorana_FHC.root'}
+
+
+#Plotting limit dictionaries
+
+limit_locs = {"PIENU":'limit_files/PIENU_2019.csv',
+              "PS191":'limit_files/PS191_1988.csv',
+              "KEK":'limit_files/KEK.csv',
+              "E949":'limit_files/E949_2015.csv'}
+
+limit_colours = {"PIENU":"C1",
+                "PS191":"C2",
+                "KEK":"C3",
+                "E949":"C4"}
 
 ##TPC
 TPCxlo=0
