@@ -50,7 +50,7 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
         if Params["Run"] == "run3":
-            for HNL_mass in [2]:
+            for HNL_mass in [2, 10, 20, 50, 100, 180, 200, 220, 240, 245]: #Don't have 150MeV sample yet
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
@@ -147,12 +147,14 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
             new_overlay.to_pickle(loc_pkls+"DetVars/overlay_"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+save_str+".pkl")
             del(new_overlay)
         elif Params["Load_Signal_DetVars"] == True: #I should ONLY load these samples in this case.
+            first_str = sample.split("_")[0]
+            HNL_mass = int(first_str)
             NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
             df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
             file = df_signal
             make_unique_ev_id(file) #This creates "rse_id" branch
             if Params["Only_keep_common_DetVar_evs"] == True:
-                filtered = file.loc[(file['rse_id'].isin(common_evs['rse_id']))]
+                filtered = file.loc[(file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
                 new_overlay = filtered.copy()
                 del(file)
                 del(filtered)
@@ -317,7 +319,7 @@ def create_sig_detsys_samples_list(Params): #Returns the list of samples to run 
             for DetVar in Constants.Detector_variations:
                 samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Run"] == "run3":
-        for HNL_mass in [180]: #While I only have 150MeV sample
+        for HNL_mass in [2, 10, 20, 50, 100, 180, 200, 220, 240, 245]: #Don't have 150MeV sample yet
             for DetVar in Constants.Detector_variations:
                 samples+=[str(HNL_mass)+"_"+DetVar]
         
@@ -378,8 +380,11 @@ def pyhf_params(Params):
         print("Using fully evaluated systematic uncertainty for background. Dirt will still be 100%.")
     if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == True):
         print("Using FLAT systematic uncertainty on signal")
-        perc_signal = Params["Flat_sig_frac"]*100
-        print("With " + str(perc_signal) + "% on all signal")
+        perc_signal_KDAR = Params["Flat_sig_KDAR"]
+        perc_signal_detvar = Params["Flat_sig_detvar"]
+        total_sig_err = np.sqrt(perc_signal_KDAR**2 + perc_signal_detvar**2)
+        print("With " + str(total_sig_err*100) + "% on all signal")
+        Params["Flat_sig_frac"] = total_sig_err
     if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == False):
         perc_flux = Params["Signal_flux_error"]*100
         print(f"Using fully evaluated systematic uncertainty for signal. Using {perc_flux}% flux error.")

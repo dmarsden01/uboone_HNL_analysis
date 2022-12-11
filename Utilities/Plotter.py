@@ -232,6 +232,63 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
             plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
         plt.show()
         
+def Plot_BDT_output_systematics(HNL_masses=[], samples=[], colours={}, ALPHA=1.0, xlims=[0,1.0],figsize=[12,8], density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
+    """
+    This should take the histograms which have already been binned and scaled and plot the total uncertainties on bkg.
+    Therefore it will display what is being fed into the limit setting software.
+    """
+    
+    if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
+    if(samples==[]): raise Exception("Specify samples")
+    if(colours=={}): colours = {'overlay_test':Constants.sample_colours['overlay'],
+                                'dirtoverlay':Constants.sample_colours['dirtoverlay'],
+                                'beamoff':Constants.sample_colours['beamoff'],
+                                'signal_test':Constants.sample_colours['signal']}
+    
+    if logy == True:
+        logscale="log"
+    elif logy == False:
+        logscale="linear"
+    
+    for HNL_mass in HNL_masses:
+        plt.figure(figsize=figsize,facecolor='white')
+        if logit == False:
+            bkg_scores=[samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],
+                   samples['beamoff'][f'BDT_output_{HNL_mass}MeV']]
+        if logit == True:
+            bkg_scores=[Functions.logit(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV']),
+                        Functions.logit(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV']),
+                        Functions.logit(samples['beamoff'][f'BDT_output_{HNL_mass}MeV'])]
+        bkg_weights=[sample_norms['overlay_test'],sample_norms['dirtoverlay'],sample_norms['beamoff']]
+        bkg_colors=[colours['overlay_test'],colours['dirtoverlay'],colours['beamoff']]
+        labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
+        
+        bins_list = np.histogram(bkg_scores[0],bins=bins,range=xlims)[1] #For mergebins part
+        tot_uncrt = 
+              
+        plot=plt.hist(bkg_scores,
+              label=labels,
+              range=xlims,bins=bins,
+              histtype="stepfilled",
+              stacked=True,linewidth=2,edgecolor="black",
+              weights=bkg_weights, color=bkg_colors, alpha=ALPHA)
+        if logit == False:
+            plt.hist(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[HNL_mass]*HNL_scale,bins=bins,range=xlims,
+                     lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
+        if logit == True:
+            plt.hist(Functions.logit(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV']),
+                     weights=sample_norms[HNL_mass]*HNL_scale,bins=bins,range=xlims,
+                     lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
+        plt.legend(loc=legloc,frameon=True)
+        
+        plt.xlabel('BDT score', fontsize=30)
+        plt.ylabel('Events', fontsize=30)
+        plt.rcParams.update({'font.size': 30})
+        plt.yscale(logscale)
+        if savefig == True:
+            plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
+        plt.show()
+        
                     
 # def Plot_systematics():
     
