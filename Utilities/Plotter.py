@@ -264,7 +264,7 @@ def Plot_BDT_output_systematics(HNL_masses=[], samples=[], colours={}, ALPHA=1.0
         labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
         
         bins_list = np.histogram(bkg_scores[0],bins=bins,range=xlims)[1] #For mergebins part
-        tot_uncrt = 
+        # tot_uncrt = 
               
         plot=plt.hist(bkg_scores,
               label=labels,
