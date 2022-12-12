@@ -40,7 +40,7 @@ Preselection_dict_crtveto = {"crtveto":"crtveto==0"}
 Old_generator_mass_points = [20, 50, 100, 150, 180, 200] #These are the samples created with the OLD generator (both run1 and run3) 
     
 Old_gen_HNL_scalings = {20:1228.625, #Scalings Pawel sent to use for the HNL samples created with the old generator version
-                        50:199.4745, #These may not direclty work because the different BR will also affect the number which decay away before reaching uboone
+                        50:199.4745, #These will not direclty work because the different BR will also affect the number which decay away before reaching uboone
                         100:49.9434,
                         150:22.19445,
                         180:15.43885,

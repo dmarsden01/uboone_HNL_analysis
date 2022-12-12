@@ -229,6 +229,7 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
         plt.rcParams.update({'font.size': 30})
         plt.yscale(logscale)
         if savefig == True:
+            plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".pdf")
             plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
         plt.show()
         
