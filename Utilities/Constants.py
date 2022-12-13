@@ -1,7 +1,8 @@
 sample_type = {"overlay":"MC",
               "dirtoverlay":"MC",
               "beamoff":"data",
-              "signal":"MC_signal"}
+              "signal":"MC_signal",
+              "beamgood":"data"}
 
 root_dir = 'nuselection'
 main_tree = 'NeutrinoSelectionFilter'

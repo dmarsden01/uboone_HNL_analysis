@@ -20,7 +20,7 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
     if Params["only_presel"]:
         Params["variables_string"] = "Presel_vars"
         Params["variables"] = Variables.Preselection_vars_CRT
-        Params["variables_MC"] = Variables.Preselection_vars_CRT_MC
+        Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.sys_vars
     elif Params["Load_truth_vars"]:
         Params["variables_string"] = "Truth_vars"
         Params["variables"] = Variables.First_pass_vars
@@ -366,6 +366,77 @@ def logit(x): #The "logit" function, also known as the inverse of the logistic f
 
 def invlogit(x): #The "logistic" function, also known as the inverse of the "logit" function
     return np.exp(x)/(1+np.exp(x))
+
+#Systematic errors from reweighting functions
+
+def All_reweight_err(df, var_name, BINS, x_range, Norm):
+    results_dict = {}
+    n_bins = len(BINS)-1
+    for Multisim in Constants.Multisim_univs:
+        Nuniverse = Constants.Multisim_univs[Multisim]
+        n_tot = np.empty([Nuniverse, n_bins])
+        n_cv_tot = np.empty(n_bins)
+        n_tot.fill(0)
+        n_cv_tot.fill(0)
+        
+        variable = df[var_name] #The BDT output score
+        syst_weights = df[Multisim] #An array of length of the number of events, each entry is an array of length Nunivs
+        spline_fix_cv  = df["weight"]*Norm
+        spline_fix_var = df["weight"]*Norm
+        
+        s = syst_weights
+        df_weights = pd.DataFrame(s.values.tolist())
+        n_cv, bins = np.histogram(variable, range=x_range, bins=BINS, weights=spline_fix_cv)
+        n_cv_tot += n_cv
+        
+        if(Multisim == "weightsGenie"): #special treatment as ["weightSplineTimesTune"] is included in genie weights
+            if not df_weights.empty:
+                for i in range(Nuniverse):
+                    weight = df_weights[i].values / 1000.
+                    weight[weight == 1]= df["weightSplineTimesTune"].iloc[weight == 1]
+                    weight[np.isnan(weight)] = df["weightSplineTimesTune"].iloc[np.isnan(weight)]
+                    weight[weight > 50] = df["weightSplineTimesTune"].iloc[weight > 50] # why 30 not 50?
+                    weight[weight <= 0] = df["weightSplineTimesTune"].iloc[weight <= 0]
+                    weight[weight == np.inf] = df["weightSplineTimesTune"].iloc[weight == np.inf]
+                
+                    n, bins = np.histogram(variable, 
+                                           weights=np.nan_to_num(weight*spline_fix_var/df["weightSplineTimesTune"]), range=x_range, bins=BINS)
+                    n_tot[i] += n
+                    
+        if(Multisim == "weightsPPFX"): #special treatment as ["PPFXPcv"] is included in ppfx weights
+            if not df_weights.empty:
+                for i in range(Nuniverse):
+                    weight = df_weights[i].values / 1000.
+                    weight[weight == 1]= df["ppfx_cv"].iloc[weight == 1]
+                    weight[np.isnan(weight)] = df["ppfx_cv"].iloc[np.isnan(weight)]
+                    weight[weight > 100] = df["ppfx_cv"].iloc[weight > 100]
+                    weight[weight < 0] = df["ppfx_cv"].iloc[weight < 0]
+                    weight[weight == np.inf] = df["ppfx_cv"].iloc[weight == np.inf]
+                
+                    n, bins = np.histogram(variable, weights=weight*np.nan_to_num(spline_fix_var/df["ppfx_cv"]), range=x_range, bins=BINS)
+                    n_tot[i] += n
+        
+        if(Multisim == "weightsReint"):
+            if not df_weights.empty:
+                for i in range(Nuniverse):
+                    weight = df_weights[i].values / 1000.
+                    weight[np.isnan(weight)] = 1
+                    weight[weight > 100] = 1
+                    weight[weight < 0] = 1
+                    weight[weight == np.inf] = 1
+                    n, bins = np.histogram(variable, weights=weight*spline_fix_var, range=x_range, bins=BINS)
+                    n_tot[i] += n
+        cov = np.empty([len(n_cv), len(n_cv)])
+        cov.fill(0)
+
+        for n in n_tot:
+            for i in range(len(n_cv)):
+                for j in range(len(n_cv)):
+                    cov[i][j] += (n[i] - n_cv_tot[i]) * (n[j] - n_cv_tot[j])
+
+        cov /= Nuniverse
+        results_dict[Multisim] = [cov,n_cv_tot,n_tot,bins]
+    return results_dict
     
 #Limit setting functions    
 def pyhf_params(Params):
