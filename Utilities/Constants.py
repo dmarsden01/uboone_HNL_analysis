@@ -75,6 +75,24 @@ DIRT_run3_scaling = 0.35 #NOT SURE where this comes from, apparently it is stand
 NuMI_KDAR_scaling_run1 = 8.0 #This comes from the discrepancy between numu flux from KDAR dump between Geant4 and MiniBooNE measurement. Taken from Owen's thesis
 NuMI_KDAR_scaling_run3 = 8.6
 
+run1_event_numbers = {2: 36059,
+                     10: 35032,
+                     20: 36815,
+                     50: 35518, 
+                     100: 36881, 
+                     150: 35190, 
+                     180: 36670, 
+                     200: 35325,
+                     220: 36849,
+                     240: 35400,
+                     245: 36877,
+                     "150_pi0": 30261,
+                     "180_pi0": 36452,
+                     "200_pi0": 35238,
+                     "220_pi0": 36868,
+                     "240_pi0": 35264,
+                     "245_pi0": 36698}
+
 run1_POT_scaling_dict = {2: 2.273110163825259e-06,
                          10: 4.478610916645953e-06,
                          20: 2.583047654702099e-12,
@@ -93,10 +111,13 @@ run1_POT_scaling_dict = {2: 2.273110163825259e-06,
                          "240_pi0": 0.00041190884760711096,
                          "245_pi0": 0.000458175050366498}
 
+event_number_overlay_run1 = 914729
+event_number_dirt_run1 = 569506
+event_number_EXT_run1 = 904362
+
 SF_overlay_run1 = 0.08559729531465318
 SF_dirt_run1 = 0.08961042442406035
 SF_EXT_run1 = 0.5612087579382191
-SF_signal_run1_100MeV = 6.913852627300102e-08
 
 run1_overlay_detvar_POT = {"WireModX":3.67e20, #Just taken from spreadsheet, but matches the POT saved in the Trees
                            "WireModYZ":3.7e20,
@@ -122,6 +143,24 @@ run3_overlay_detvar_POT = {"WireModX":3.24e20, #Taken from POT counter
                            "Recomb2":3.3e20,
                            "CV":3.72e20}
                            
+run3_event_numbers = {2: 45159,
+                     10: 44463,
+                     20: 46022,
+                     50: 44579, 
+                     100: 45304, 
+                     150: 44975, 
+                     180: 46038, 
+                     200: 45003,
+                     220: 46093,
+                     240: 44894,
+                     245: 46114,
+                     "150_pi0": 45827,
+                     "180_pi0": 44811,
+                     "200_pi0": 43943,
+                     "220_pi0": 44503,
+                     "240_pi0": 45704,
+                     "245_pi0": 44073}    
+    
 run3_POT_scaling_dict = {2: 4.55623564219535e-06,
                          10: 8.724043160892894e-06,
                          20: 5.235714406049288e-12, 
@@ -139,6 +178,10 @@ run3_POT_scaling_dict = {2: 4.55623564219535e-06,
                          "220_pi0": 0.0004202350100663058,
                          "240_pi0": 0.0008029579728605566,
                          "245_pi0": 0.0009711075263359489}
+
+event_number_overlay_run3 = 748702
+event_number_dirt_run3 = 389264
+event_number_EXT_run3 = 3211097
 
 SF_overlay_run3 = 0.2513368817255014
 SF_dirt_run3 = 0.16953052634982632
