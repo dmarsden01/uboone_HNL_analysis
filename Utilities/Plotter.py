@@ -233,7 +233,10 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
 
         bins=bins_new
     
-    fig,ax = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=figsize,dpi=dpi)
+    # fig,ax = plt.subplots(nrows=1, ncols=1, sharex=True, figsize=figsize,dpi=dpi) #Just variable plot
+    fig,ax = plt.subplots(nrows=2, ncols=1, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=figsize,dpi=dpi)
+    
+    plt.sca(ax[0])
         
     if(discrete):
         bins = np.arange(xlims[0], xlims[1] + 1.5) - 0.5
@@ -246,6 +249,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     x1,y=np.histogram(var_Data,bins=bins,range=xlims)
     bin_center = [(y[i] + y[i+1])/2. for i in range(len(y)-1)]
     dat_val=x
+    # dat_err=np.sqrt(x1)*Functions.safe_div(x,x1) #need to write one for arrays instead of single values.
     dat_err=np.sqrt(x1)*np.nan_to_num(x/x1)
 
     Datanum=dat_val.sum()
@@ -301,8 +305,31 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     
     plt.legend(loc=legloc,frameon=False)
     
+    
+    
     plt.xlabel(xlabel)
     plt.xlim(xlims)
+    
+    plt.sca(ax[1])
+    
+    fracer_data=np.nan_to_num(np.sqrt(x1)/x1)
+    x_err=fracer_data*x
+    fracer_mc=np.nan_to_num(tot_mcerr/plot[0][2])
+
+    # if(ratio):
+    rat=np.nan_to_num(x/plot[0][2])
+    rat[x==0]=1 #dont think this is a good way to deal with this
+
+    rat_err=np.nan_to_num(rat*np.sqrt(fracer_mc**2+fracer_data**2))
+       
+    plt.errorbar(bin_center,rat,yerr=rat_err,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data")
+    plt.ylabel("Data/MC")
+    plt.axhline(1,ls='-',color='black')
+    plt.axhline(1.1,ls='--',color='grey')
+    plt.axhline(0.9,ls='--',color='grey')
+    ylim = max(abs(np.nan_to_num(rat)))*1.1
+    plt.ylim(0.7,1.3)
+    
     plt.tight_layout(rect=[0, 0, 1, 0.92])
           
 

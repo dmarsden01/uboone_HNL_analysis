@@ -11,6 +11,11 @@ import Utilities.Constants as Constants
 import Utilities.Variables_list as Variables
 
 #Making pickle files
+def safe_div(x,y):
+    if y == 0.0:
+        return 0
+    return x / y
+
 def create_sample_list(Params): #Returns an extended parameter dict and a the list of samples to run over
     if Params["FLATTEN"] == True: Params["Flat_state"] = "flattened"
     else: Params["Flat_state"] = "unflattened"

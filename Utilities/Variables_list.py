@@ -30,13 +30,15 @@ weight_related = ['weightSplineTimesTune', 'ppfx_cv', 'npi0'] #For MC only, incl
 
 sys_vars = ["weightsPPFX","weightsGenie","weightsReint"]
 
+swtrig_vars = ["swtrig_pre","swtrig_post"] #Think this is only for flash time plots
+
 First_pass_vars = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars
 First_pass_vars_MC = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars + weight_related
 First_pass_vars_for_BDT = shower_vars + track_vars + multiplicity_vars + all_other_vars
 
 #Variables used in Pre-selection
 
-Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy2","contained_fraction","trk_score","trk_score_v","n_pfps"]
+Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy2","contained_fraction","trk_score","trk_score_v","n_pfps"] + swtrig_vars
 Preselection_vars_MC = Preselection_vars + weight_related
 Preselection_vars_CRT = Preselection_vars+["crtveto"]
 Preselection_vars_CRT_MC = Preselection_vars_CRT+weight_related
