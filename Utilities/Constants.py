@@ -193,9 +193,9 @@ SF_overlay_run3 = 0.2513368817255014
 SF_dirt_run3 = 0.16953052634982632
 SF_EXT_run3 = 0.3089104916683624
 
-sample_colours = {'overlay':'peru',
-                  'dirtoverlay':'darkorange',
-                  'beamoff':'deepskyblue',
+sample_colours = {'overlay':'mediumblue',
+                  'dirtoverlay':'cornflowerblue',
+                  'beamoff':'limegreen',
                   'signal':'red'}
 
 Multisim_univs = {"weightsPPFX":600,

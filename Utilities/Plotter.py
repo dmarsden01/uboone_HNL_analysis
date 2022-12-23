@@ -140,10 +140,15 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[]):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
+    if(colours_sample=={}): colours_sample = {'overlay':Constants.sample_colours['overlay'],
+                                              'dirtoverlay':Constants.sample_colours['dirtoverlay'],
+                                              'beamoff':Constants.sample_colours['beamoff'],
+                                              'signal':Constants.sample_colours['signal']}
+    if(order==[]): order = ["beamoff","overlay","dirtoverlay"] #From bottom to top in stack
     
     beamgood=samples["beamgood"] #I should loop through samples instead, so don't always need data
     beamoff=samples["beamoff"]
@@ -157,10 +162,20 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     var_Dirt=dirtoverlay[variable]
     var_HNL=signal[variable]
     
+    variable_sample = {'overlay':var_Overlay,
+                       'dirtoverlay':var_Dirt,
+                       'beamoff':var_Offbeam,
+                       'signal':var_HNL}
+    
     weight_Offbeam=np.ones(len(var_Offbeam))*sample_norms["beamoff"]
     weight_Overlay=overlay["weight"]*sample_norms["overlay"]
     weight_Dirt=dirtoverlay["weight"]*sample_norms["dirtoverlay"]
     weight_signal=np.ones(len(var_HNL))*sample_norms["signal"]*HNLplotscale
+    
+    weights_sample = {'overlay':weight_Overlay,
+                      'dirtoverlay':weight_Dirt,
+                      'beamoff':weight_Offbeam,
+                      'signal':weight_signal}
     
     if xlims[0] == 0 and xlims[1] == 0: xlims = [min(var_Overlay),max(var_Overlay)]
     
@@ -259,19 +274,34 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     HNL_num=sum(weight_signal)
     
     if show_ev_nums==True:
-        labels=[fr"In-Cryo $\nu$ ({Overlaynum:.1f})",fr"Out-Cryo $\nu$ ({Dirtnum:.1f})",f"Beam-Off ({Offbeamnum:.1f})"]
+        labels_sample = {'overlay':fr"In-Cryo $\nu$ ({Overlaynum:.1f})",
+                         'dirtoverlay':fr"Out-Cryo $\nu$ ({Dirtnum:.1f})",
+                         'beamoff':f"Beam-Off ({Offbeamnum:.1f})",
+                         'signal':f"{HNL_mass} MeV HNL ({HNL_num:.1f})"}
+        # labels=[fr"In-Cryo $\nu$ ({Overlaynum:.1f})",fr"Out-Cryo $\nu$ ({Dirtnum:.1f})",f"Beam-Off ({Offbeamnum:.1f})"]
         sig_label = [f"{HNL_mass} MeV HNL ({HNL_num:.1f})"]
         data_label = f"NuMI Data ({Datanum:.0f})"
     else:
-        labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
+        labels_sample = {'overlay':fr"In-Cryo $\nu$",
+                         'dirtoverlay':fr"Out-Cryo $\nu$",
+                         'beamoff':f"Beam-Off",
+                         'signal':f"{HNL_mass} MeV HNL"}
+        # labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
         sig_label = [f"{HNL_mass} MeV HNL"]
         data_label = "NuMI Data"
     
     plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
 
-    varis=[var_Overlay,var_Dirt,var_Offbeam]
-    weights=[weight_Overlay,weight_Dirt,weight_Offbeam]
-    colors=['peru',"darkorange",'deepskyblue']
+    varis, weights, colors, labels = [], [], [], []
+    for sample in order:
+        varis.append(variable_sample[sample])
+        weights.append(weights_sample[sample])
+        colors.append(colours_sample[sample])
+        labels.append(labels_sample[sample])
+    # varis=[var_Overlay,var_Dirt,var_Offbeam]
+    # weights=[weight_Overlay,weight_Dirt,weight_Offbeam]
+    # colors=['peru',"darkorange",'deepskyblue']
+    # colors=[colours["overlay"],colours["dirtoverlay"],colours["beamoff"]]
             
     plot=plt.hist(varis,
               label=labels,
@@ -285,7 +315,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     
     plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
 
-    color="red"
+    color=colours_sample["signal"]
     
     bkg_stack=varis
     bkg_stack_w=weights
@@ -305,9 +335,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     
     plt.legend(loc=legloc,frameon=False)
     
-    
-    
-    plt.xlabel(xlabel)
+    # plt.xlabel(xlabel)
     plt.xlim(xlims)
     
     plt.sca(ax[1])
@@ -329,6 +357,11 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     plt.axhline(0.9,ls='--',color='grey')
     ylim = max(abs(np.nan_to_num(rat)))*1.1
     plt.ylim(0.7,1.3)
+    
+    if xticks != []:
+        plt.xticks(xticks)
+    
+    plt.xlabel(xlabel)
     
     plt.tight_layout(rect=[0, 0, 1, 0.92])
           
