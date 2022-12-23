@@ -140,7 +140,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[]):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -149,6 +149,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
                                               'beamoff':Constants.sample_colours['beamoff'],
                                               'signal':Constants.sample_colours['signal']}
     if(order==[]): order = ["beamoff","overlay","dirtoverlay"] #From bottom to top in stack
+    if(sys_dict=={} and CalcSys==True): raise Exception("Specify systematic errors dict")
     
     beamgood=samples["beamgood"] #I should loop through samples instead, so don't always need data
     beamoff=samples["beamoff"]
@@ -194,20 +195,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     offbkg_weighted=np.histogram(var_Offbeam,bins=bins,range=xlims,weights=weight_Offbeam)[0]
     overlaybkg_weighted=np.histogram(var_Overlay,bins=bins,range=xlims,weights=weight_Overlay)[0]
     dirtbkg_weighted=np.histogram(var_Dirt,bins=bins,range=xlims,weights=weight_Dirt)[0]
-    
-    # offbkg_stat, overlaybkg_stat, dirtbkg_stat = np.ones(len(totbkg)), np.ones(len(totbkg)), np.ones(len(totbkg))
-    
-    # for i,bin_bkg in enumerate(offbkg):
-    #     poisson_offbkg = np.sqrt(offbkg[i])
-    #     poisson_overlaybkg = np.sqrt(overlaybkg[i])
-    #     poisson_dirtbkg = np.sqrt(dirtbkg[i])
-    #     scaled_poisson_offbkg = poisson_offbkg*(offbkg_weighted[i]/offbkg[i])
-    #     scaled_poisson_overlaybkg = poisson_overlaybkg*(overlaybkg_weighted[i]/overlaybkg[i])
-    #     scaled_poisson_dirtbkg = poisson_dirtbkg*(dirtbkg_weighted[i]/dirtbkg[i])
-    #     offbkg_stat[i] = scaled_poisson_offbkg
-    #     overlaybkg_stat[i] = scaled_poisson_overlaybkg
-    #     dirtbkg_stat[i] = scaled_poisson_dirtbkg
-        
+           
     #Testing Owens way, Err = sqrt(N*S.F**2)
     mc_w=np.histogram(var_Overlay,bins=bins,range=xlims,weights=weight_Overlay**2)
     off_w=np.histogram(var_Offbeam,bins=bins,range=xlims,weights=weight_Offbeam**2)
@@ -222,21 +210,16 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     tot_mcerr = stat_bkgerr
     
     if(CalcSys): #Owen's way of calculating systematics for arbitrary variable, using my new function
-        Norm = Constants.SF_overlay_run1
-        results_dict=Functions.All_reweight_err(overlay,variable,bins,xlims,Norm)
-        # cov_PPFX,cv,n_tot,bins_sys=SC.sys_err(overlay,"weightsPPFX",var,query,xlims,bins,sample_info["overlay"]["NormScale"])
-        # cov_Reint,cv,n_tot,bins_sys=SC.sys_err(overlay,"weightsReint",var,query,xlims,bins,sample_info["overlay"]["NormScale"])
+        frac_total = 0
+        for frac_sys in sys_dict[variable]:
+            frac_total += frac_sys**2 #Adding systematic sources of bkg in quadrature
         
-        cov_gen = results_dict["weightsGenie"][0]
-        cov_PPFX = results_dict["weightsPPFX"][0]
-        cov_Reint = results_dict["weightsReint"][0]
-        
-        cov_mc_stat   = np.zeros([len(stat_bkgerr), len(stat_bkgerr)])
-        cov_mc_stat[np.diag_indices_from(cov_mc_stat)]=stat_bkgerr**2
+        total_frac_sys = np.sqrt(frac_total)
+        total_sys_err = frac_total*overlaybkg_weighted
         
         dirt_norm_err_fac = 1.0
         dirt_norm_err=dirtbkg_weighted*dirt_norm_err_fac
-        tot_mcerr=np.sqrt( np.diag((cov_gen+ cov_mc_stat + cov_PPFX+cov_Reint))+dirt_norm_err**2)
+        tot_mcerr=np.sqrt( stat_bkgerr**2+total_sys_err**2+dirt_norm_err**2)
     
     if(MergeBins): #remove bins with zero bkg prediction
         bins_new=[]
@@ -298,10 +281,6 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         weights.append(weights_sample[sample])
         colors.append(colours_sample[sample])
         labels.append(labels_sample[sample])
-    # varis=[var_Overlay,var_Dirt,var_Offbeam]
-    # weights=[weight_Overlay,weight_Dirt,weight_Offbeam]
-    # colors=['peru',"darkorange",'deepskyblue']
-    # colors=[colours["overlay"],colours["dirtoverlay"],colours["beamoff"]]
             
     plot=plt.hist(varis,
               label=labels,
@@ -338,11 +317,25 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     # plt.xlabel(xlabel)
     plt.xlim(xlims)
     
+    #---Sub-plot----#
     plt.sca(ax[1])
     
     fracer_data=np.nan_to_num(np.sqrt(x1)/x1)
     x_err=fracer_data*x
     fracer_mc=np.nan_to_num(tot_mcerr/plot[0][2])
+    
+    rat_err_data=x_err*(1/plot[0][2])
+    
+    rat_err_mc=fracer_mc
+    rat_err=np.sqrt(rat_err_data**2)
+
+    rat_err_mc=np.nan_to_num(rat_err_mc) #other wise the next doesnt plot pro[erly]
+
+    upvals= np.append(1+( rat_err_mc),1+( rat_err_mc)[-1]) #hate this but need to repeat last value to get bar on last bin to work, saw it here https://matplotlib.org/stable/gallery/lines_bars_and_markers/filled_step.html
+    lowvals=np.append(1-( rat_err_mc),1-( rat_err_mc)[-1])
+
+
+    plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
 
     # if(ratio):
     rat=np.nan_to_num(x/plot[0][2])
@@ -357,6 +350,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     plt.axhline(0.9,ls='--',color='grey')
     ylim = max(abs(np.nan_to_num(rat)))*1.1
     plt.ylim(0.7,1.3)
+    # plt.ylim(0.9,1.1)
     
     if xticks != []:
         plt.xticks(xticks)
