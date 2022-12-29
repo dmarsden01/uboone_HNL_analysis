@@ -198,6 +198,15 @@ sample_colours = {'overlay':'mediumblue',
                   'beamoff':'limegreen',
                   'signal':'red'}
 
+variable_names_dict = {'nslice':"Neutrino slice",
+                       'flash_time': "Flash time",
+                       'nu_flashmatch_score': "Flashmatch score",
+                       'NeutrinoEnergy2':"Energy in slice",
+                       'contained_fraction':"Containted fraction",
+                       'trk_score':"Track score",
+                       'n_pfps':"Object multiplicity",
+                       'crtveto':"CRT veto"}
+
 Multisim_univs = {"weightsPPFX":600,
                   "weightsGenie":600,
                   "weightsReint":1000}

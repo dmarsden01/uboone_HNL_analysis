@@ -140,7 +140,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -182,7 +182,10 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     
     if(isinstance(bins, int)):
         nbins=bins
-        bins=np.linspace(xlims[0],xlims[1],nbins+1)
+        if centre_bins == True:
+            bins=np.linspace(xlims[0],xlims[1],nbins+1)-0.5
+        else:
+            bins=np.linspace(xlims[0],xlims[1],nbins+1)
     else: nbins=len(bins)-1
     
     #all UNWEIGHTED hists
@@ -292,7 +295,10 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     upvals=np.append((plot[0][2]+tot_mcerr),(plot[0][2]+tot_mcerr)[-1])
     lowvals=np.append((plot[0][2]-tot_mcerr),(plot[0][2]-tot_mcerr)[-1])
     
-    plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
+    if hatch == False:
+        plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
+    if hatch == True:
+        plt.fill_between(y, lowvals, upvals,step="post",hatch='//',alpha=0,zorder=2)
 
     color=colours_sample["signal"]
     
@@ -337,7 +343,6 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
 
     plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
 
-    # if(ratio):
     rat=np.nan_to_num(x/plot[0][2])
     rat[x==0]=1 #dont think this is a good way to deal with this
 
@@ -448,6 +453,7 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
                      lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
         plt.legend(loc=legloc,frameon=True)
         
+        
         plt.xlabel('BDT score', fontsize=30)
         plt.ylabel('Events', fontsize=30)
         plt.rcParams.update({'font.size': 30})
@@ -456,6 +462,125 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
             plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".pdf")
             plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
         plt.show()
+        
+def Plot_BDT_output_data(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
+    
+    if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
+    if(samples==[]): raise Exception("Specify samples")
+    if(colours=={}): colours = {'overlay_test':Constants.sample_colours['overlay'],
+                                'dirtoverlay':Constants.sample_colours['dirtoverlay'],
+                                'beamoff':Constants.sample_colours['beamoff'],
+                                'signal_test':Constants.sample_colours['signal']}
+    
+    if logy == True:
+        logscale="log"
+    elif logy == False:
+        logscale="linear"
+    
+    for HNL_mass in HNL_masses:
+        
+        fig,ax = plt.subplots(nrows=2, ncols=1, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=figsize,dpi=dpi)
+    
+        #----primary plot----#
+        plt.sca(ax[0])
+        
+        # plt.figure(figsize=figsize,facecolor='white')
+        if logit == False:
+            bkg_scores=[samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],
+                   samples['beamoff'][f'BDT_output_{HNL_mass}MeV']]
+            dat_val = samples['beamgood'][f'BDT_output_{HNL_mass}MeV']
+        if logit == True:
+            bkg_scores=[Functions.logit(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV']),
+                        Functions.logit(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV']),
+                        Functions.logit(samples['beamoff'][f'BDT_output_{HNL_mass}MeV'])]
+            dat_val=Functions.logit(samples['beamgood'][f'BDT_output_{HNL_mass}MeV'])
+        bkg_weights=[sample_norms['overlay_test'],sample_norms['dirtoverlay'],sample_norms['beamoff']]
+        bkg_colors=[colours['overlay_test'],colours['dirtoverlay'],colours['beamoff']]
+        labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
+        
+        x,y=np.histogram(var_Data,bins=bins,range=xlims,density=density)
+        x1,y=np.histogram(var_Data,bins=bins,range=xlims)
+        bin_center = [(y[i] + y[i+1])/2. for i in range(len(y)-1)]
+        dat_val=x
+        # dat_err=np.sqrt(x1)*Functions.safe_div(x,x1) #need to write one for arrays instead of single values.
+        dat_err=np.sqrt(x1)*np.nan_to_num(x/x1)
+        
+        plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
+        
+        bins_list = np.histogram(bkg_scores[0],bins=bins,range=xlims)[1] #For mergebins part
+              
+        if(MergeBins): #remove bins with zero bkg prediction
+            totbkg=np.histogram(bkg_scores[0],bins=bins,range=xlims)[0]+np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]+np.histogram(bkg_scores[2],bins=bins,range=xlims)[0]
+            offbkg=np.histogram(bkg_scores[2],bins=bins,range=xlims)[0]
+            overlaybkg=np.histogram(bkg_scores[0],bins=bins,range=xlims)[0]
+            dirtbkg=np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]
+            bins_new=[]
+            for i,bin_bkg in enumerate(totbkg):
+                if(offbkg[i]>1 or overlaybkg[i]>1):
+                    bins_new.append(bins_list[i])
+
+            bins_new.append(bins_list[-1])
+
+            bins=bins_new
+        
+        plot=plt.hist(bkg_scores,
+              label=labels,
+              range=xlims,bins=bins,
+              histtype="stepfilled",
+              stacked=True,linewidth=2,edgecolor="black",
+              weights=bkg_weights, color=bkg_colors, alpha=ALPHA)
+        if logit == False:
+            plt.hist(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[HNL_mass]*HNL_scale,bins=bins,range=xlims,
+                     lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
+        if logit == True:
+            plt.hist(Functions.logit(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV']),
+                     weights=sample_norms[HNL_mass]*HNL_scale,bins=bins,range=xlims,
+                     lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
+        plt.legend(loc=legloc,frameon=True)
+        
+        
+        plt.xlabel('BDT score', fontsize=30)
+        plt.ylabel('Events', fontsize=30)
+        plt.rcParams.update({'font.size': 30})
+        plt.yscale(logscale)
+        
+        #----sub-plot----#
+        plt.sca(ax[1])
+    
+        fracer_data=np.nan_to_num(np.sqrt(x1)/x1)
+        x_err=fracer_data*x
+        fracer_mc=np.nan_to_num(tot_mcerr/plot[0][2])
+
+        rat_err_data=x_err*(1/plot[0][2])
+
+        rat_err_mc=fracer_mc
+        rat_err=np.sqrt(rat_err_data**2)
+
+        rat_err_mc=np.nan_to_num(rat_err_mc) #other wise the next doesnt plot pro[erly]
+
+        upvals= np.append(1+( rat_err_mc),1+( rat_err_mc)[-1]) #hate this but need to repeat last value to get bar on last bin to work, saw it here https://matplotlib.org/stable/gallery/lines_bars_and_markers/filled_step.html
+        lowvals=np.append(1-( rat_err_mc),1-( rat_err_mc)[-1])
+
+
+        plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
+
+        rat=np.nan_to_num(x/plot[0][2])
+        rat[x==0]=1 #dont think this is a good way to deal with this
+
+        rat_err=np.nan_to_num(rat*np.sqrt(fracer_mc**2+fracer_data**2))
+
+        plt.errorbar(bin_center,rat,yerr=rat_err,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data")
+        plt.ylabel("Data/MC")
+        plt.axhline(1,ls='-',color='black')
+        plt.axhline(1.1,ls='--',color='grey')
+        plt.axhline(0.9,ls='--',color='grey')
+        ylim = max(abs(np.nan_to_num(rat)))*1.1
+        plt.ylim(0.7,1.3)
+        
+        if savefig == True:
+            plt.savefig("plots/BDT_output/BDT_output_" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".pdf")
+            plt.savefig("plots/BDT_output/BDT_output_" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
+        # plt.show()
         
 def Plot_BDT_output_systematics(HNL_masses=[], samples=[], colours={}, ALPHA=1.0, xlims=[0,1.0],figsize=[12,8], density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
     """
