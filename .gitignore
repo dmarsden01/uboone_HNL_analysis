@@ -13,3 +13,4 @@ bdts/
 limit_files/
 pkl_files/
 reco2_script_output/
+*:memory:*
