@@ -16,6 +16,14 @@ def safe_div(x,y):
         return 0
     return x / y
 
+def Shannon_entropy_M(Total_entries, Max_entries_in_bin):
+    """
+    Returns the "Goldilocks" statistic M, which should be between 2 and 3. 
+    If smaller it is overbinned, if larger it is underbinned.
+    """
+    M = np.log2(Total_entries)/(np.log2(Total_entries/Max_entries_in_bin)+1)
+    return M
+
 def create_sample_list(Params): #Returns an extended parameter dict and a the list of samples to run over
     if Params["FLATTEN"] == True: Params["Flat_state"] = "flattened"
     else: Params["Flat_state"] = "unflattened"
