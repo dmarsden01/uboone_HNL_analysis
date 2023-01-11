@@ -318,7 +318,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     else:
         plt.yscale("linear")
     
-    plt.legend(loc=legloc,frameon=False)
+    plt.legend(loc=legloc,frameon=False, prop={'size': 18})
     
     # plt.xlabel(xlabel)
     plt.xlim(xlims)

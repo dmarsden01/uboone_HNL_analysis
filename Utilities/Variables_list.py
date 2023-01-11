@@ -36,6 +36,18 @@ First_pass_vars = event_vars + shower_vars + track_vars + multiplicity_vars + al
 First_pass_vars_MC = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars + weight_related
 First_pass_vars_for_BDT = shower_vars + track_vars + multiplicity_vars + all_other_vars
 
+#Reduced variables for BDT
+
+New_feature_list = ['shrclusdir2', 'n_tracks', 'trk_energy', 'shr_theta_v', 'contained_sps_ratio', 'trk_chipr_best', 'shr_px_v',
+                    'trk_end_x_v', 'n_pfps', 'pfnplanehits_V', 'pfnplanehits_U', 'trk_calo_energy_u_v', 'nu_flashmatch_score', 'trk_score_v',
+                    'NeutrinoEnergy2', 'shr_phi_v', 'pfnplanehits_Y', 'shr_pz_v', 'trk_theta_v', 'trk_phi_v', 'trk_energy_hits_tot',
+                    'trk_dir_z_v', 'SliceCaloEnergy2'] #Common most important features across all BDT models
+
+Rest_for_preselection = ['nslice', 'flash_time', 'contained_fraction', 'trk_score', 'crtveto']
+
+New_variables = New_feature_list + Rest_for_preselection + swtrig_vars
+New_variables_MC = New_variables + weight_related
+
 #Variables used in Pre-selection
 
 Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy2","contained_fraction","trk_score","trk_score_v","n_pfps"] + swtrig_vars

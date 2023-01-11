@@ -40,8 +40,10 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         Params["variables_MC"] = Variables.First_pass_vars_MC
     else:
         Params["variables_string"] = "my_vars"
-        Params["variables"] = Variables.First_pass_vars
-        Params["variables_MC"] = Variables.First_pass_vars_MC
+        # Params["variables"] = Variables.First_pass_vars
+        # Params["variables_MC"] = Variables.First_pass_vars_MC
+        Params["variables"] = Variables.New_variables
+        Params["variables_MC"] = Variables.New_variables_MC
 
     if Params["Run"] == "run1": Params["current"] = "FHC"
     elif Params["Run"] == "run3": Params["current"] = "RHC"
