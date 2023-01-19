@@ -49,6 +49,7 @@ Old_gen_HNL_scalings = {20:1228.625, #Scalings Pawel sent to use for the HNL sam
 
 HNL_mass_samples = [2, 10, 20, 50, 100, 150, 180, 200, 220, 240, 245] #These are the current mass points for decays to e+e-
 HNL_mass_pi0_samples = [150, 180, 200, 220, 240, 245]
+HNL_mass_pi0_samples_names = ["150_pi0", "180_pi0", "200_pi0", "220_pi0", "240_pi0", "245_pi0"]
 
 theta_mu_4 = 1e-4 #This is the same for *most* of the samples and was set in the production .fcls, now made a new dict because some are higher than this
 theta_mu_4_dict = {2:1e-1,

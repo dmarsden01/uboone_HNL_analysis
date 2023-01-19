@@ -40,10 +40,10 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         Params["variables_MC"] = Variables.First_pass_vars_MC
     else:
         Params["variables_string"] = "my_vars"
-        # Params["variables"] = Variables.First_pass_vars
-        # Params["variables_MC"] = Variables.First_pass_vars_MC
-        Params["variables"] = Variables.New_variables
-        Params["variables_MC"] = Variables.New_variables_MC
+        Params["variables"] = Variables.First_pass_vars
+        Params["variables_MC"] = Variables.First_pass_vars_MC
+        # Params["variables"] = Variables.New_variables + Variables.event_vars
+        # Params["variables_MC"] = Variables.New_variables_MC + Variables.event_vars
 
     if Params["Run"] == "run1": Params["current"] = "FHC"
     elif Params["Run"] == "run3": Params["current"] = "RHC"
@@ -61,7 +61,7 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
     if Params["Load_Signal_DetVars"] == True:
         # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
         if Params["Run"] == "run1":
-            for HNL_mass in [150]:
+            for HNL_mass in [50, 100, 150, 180, 200]:
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
         if Params["Run"] == "run3":
@@ -167,7 +167,7 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
             NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
             df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
             file = df_signal
-            make_unique_ev_id(file) #This creates "rse_id" branch
+            file = make_unique_ev_id(file) #This creates "rse_id" branch
             if Params["Only_keep_common_DetVar_evs"] == True:
                 filtered = file.loc[(file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
                 new_overlay = filtered.copy()
@@ -313,7 +313,7 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
         samples.extend(Constants.Detector_variations)
     if Params["Load_Signal_DetVars"] == True:
         # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
-        for HNL_mass in [150]:
+        for HNL_mass in [50, 100, 150, 180, 200]:
             for DetVar in Constants.Detector_variations:
                 samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True:
