@@ -40,24 +40,18 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         Params["variables_MC"] = Variables.First_pass_vars_MC
     else:
         Params["variables_string"] = "my_vars"
-        Params["variables"] = Variables.First_pass_vars
-        Params["variables_MC"] = Variables.First_pass_vars_MC
-        # Params["variables"] = Variables.New_variables + Variables.event_vars
-        # Params["variables_MC"] = Variables.New_variables_MC + Variables.event_vars
+        Params["variables"] = Variables.New_variables
+        Params["variables_MC"] = Variables.New_variables_MC
 
     if Params["Run"] == "run1": Params["current"] = "FHC"
     elif Params["Run"] == "run3": Params["current"] = "RHC"
     else: print("Need to choose either \"run1\" or \"run3\"")
 
     samples = [] #A list of all the samples which will be loaded and pickled
-    if Params["Load_lepton_signal"] == True:
-        samples.extend(["signal"])
-    if Params["Load_standard_bkgs"] == True:
-        samples.extend(["overlay","dirtoverlay","beamoff"])
-    if Params["Load_pi0_signal"] == True:
-        samples.extend(["pi0_signal"])
-    if Params["Load_DetVars"] == True:
-        samples.extend(Constants.Detector_variations)
+    if Params["Load_lepton_signal"] == True: samples.extend(["signal"])
+    if Params["Load_standard_bkgs"] == True: samples.extend(["overlay","dirtoverlay","beamoff"])
+    if Params["Load_pi0_signal"] == True: samples.extend(["pi0_signal"])
+    if Params["Load_DetVars"] == True: samples.extend(Constants.Detector_variations)
     if Params["Load_Signal_DetVars"] == True:
         # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
         if Params["Run"] == "run1":
@@ -68,10 +62,8 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
             for HNL_mass in [2, 10, 20, 50, 100, 180, 200, 220, 240, 245]: #Don't have 150MeV sample yet
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
-    if Params["Load_data"] == True:
-        samples.extend(["beamgood"])
-    if Params["Load_single_file"] == True:
-        samples = [Params["single_file"]]
+    if Params["Load_data"] == True: samples.extend(["beamgood"])
+    if Params["Load_single_file"] == True: samples = [Params["single_file"]]
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
     

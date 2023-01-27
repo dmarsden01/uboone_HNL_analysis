@@ -343,8 +343,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
 
     rat_err_mc=np.nan_to_num(rat_err_mc) #other wise the next doesnt plot pro[erly]
 
-    upvals= np.append(1+( rat_err_mc),1+( rat_err_mc)[-1]) #hate this but need to repeat last value to get bar on last bin to work, saw it here https://matplotlib.org/stable/gallery/lines_bars_and_markers/filled_step.html
-    lowvals=np.append(1-( rat_err_mc),1-( rat_err_mc)[-1])
+    upvals= np.append(1+(rat_err_mc),1+(rat_err_mc)[-1]) #hate this but need to repeat last value to get bar on last bin to work, saw it here https://matplotlib.org/stable/gallery/lines_bars_and_markers/filled_step.html
+    lowvals=np.append(1-(rat_err_mc),1-(rat_err_mc)[-1])
 
 
     plt.fill_between(y, lowvals, upvals,step="post",color="grey",alpha=0.3,zorder=2)
@@ -354,7 +354,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
 
     rat_err=np.nan_to_num(rat*np.sqrt(fracer_mc**2+fracer_data**2))
        
-    plt.errorbar(bin_center,rat,yerr=rat_err,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data")
+    # plt.errorbar(bin_center,rat,yerr=rat_err,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data") #Had this before, but wrong I think
+    plt.errorbar(bin_center,rat,yerr=fracer_data,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data")
     plt.ylabel("Data/MC")
     plt.axhline(1,ls='-',color='black')
     plt.axhline(1.1,ls='--',color='grey')

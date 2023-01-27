@@ -45,7 +45,9 @@ New_feature_list = ['shrclusdir2', 'n_tracks', 'trk_energy', 'shr_theta_v', 'con
 
 Rest_for_preselection = ['nslice', 'flash_time', 'contained_fraction', 'trk_score', 'crtveto']
 
-New_variables = New_feature_list + Rest_for_preselection + swtrig_vars
+Additional_vars = ['shr_energy_tot','trk_energy_tot', 'n_showers']
+
+New_variables = event_vars + New_feature_list + Rest_for_preselection + Additional_vars + swtrig_vars
 New_variables_MC = New_variables + weight_related
 
 #Variables used in Pre-selection
