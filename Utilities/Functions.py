@@ -449,21 +449,17 @@ def All_reweight_err(df, Multisim, var_name, BINS, x_range, Norm):
 def pyhf_params(Params):
     if Params["Stats_only"] == True:
         print("Calculating stats-only limit.")
-    elif Params["Use_flat_sys_bkg"] == True:
-        print("Using FLAT systematic uncertainty on background")
-        perc_overlay = Params["Flat_overlay_bkg_frac"]*100
-        perc_dirt = Params["Flat_dirt_bkg_frac"]*100
+    elif Params["Use_flat_sys"] == True:
+        print("Using FLAT systematic uncertainty on signal and background")
+        perc_overlay = Params["Flat_bkg_overlay_frac"]*100
+        perc_dirt = Params["Flat_bkg_dirt_frac"]*100
         print("With " + str(perc_overlay) + "% on overlay, and " + str(perc_dirt) + "% on dirt.")
-    else: 
-        print("Using fully evaluated systematic uncertainty for background. Dirt will still be 100%.")
-    if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == True):
-        print("Using FLAT systematic uncertainty on signal")
-        perc_signal_KDAR = Params["Flat_sig_KDAR"]
+        perc_signal_KDAR = Params["Signal_flux_error"]
         perc_signal_detvar = Params["Flat_sig_detvar"]
         total_sig_err = np.sqrt(perc_signal_KDAR**2 + perc_signal_detvar**2)
         print("With " + str(total_sig_err*100) + "% on all signal")
-        Params["Flat_sig_frac"] = total_sig_err
-    if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == False):
+    else: 
+        print("Using fully evaluated systematic uncertainty for background. Dirt will still be 100%.")
         perc_flux = Params["Signal_flux_error"]*100
         print(f"Using fully evaluated systematic uncertainty for signal. Using {perc_flux}% flux error.")
 
@@ -473,11 +469,20 @@ def add_hists_vals(hist_list):
         Total_hist += hist.values()
     return Total_hist
 
-def add_all_errors(err_list): #adds in quadrature
+def add_all_errors(err_list): #adds in quadrature, assuming all hists are same shape
     Total_hist = np.zeros_like(err_list[0])
     for i in range(len(err_list[0])): #Looping over the bins
         for errs in err_list: #Looping over the histograms
             Total_hist[i] += errs[i]**2 #Adding error from each hist in quadrature
+        Total_hist[i] = np.sqrt(Total_hist[i])
+    return Total_hist
+
+def add_all_errors_dict(err_dict): #adds in quadrature, assuming all hists are same shape
+    list_keys = list(err_dict.keys())
+    Total_hist = np.zeros_like(err_dict[list_keys[0]])
+    for i in range(len(err_dict[list_keys[0]])): #Looping over the bins
+        for errs in err_dict.keys(): #Looping over the histograms
+            Total_hist[i] += err_dict[errs][i]**2 #Adding error from each hist in quadrature
         Total_hist[i] = np.sqrt(Total_hist[i])
     return Total_hist
 
@@ -549,7 +554,127 @@ def remove_first_half_hist(hist_list):
     sliced_hist = hist_list[slice_at:]
     return sliced_hist
 
-def Calculate_total_uncertainty(Params, hist_dict, bkg_reweight_err_dict=None, bkg_detvar_dict=None, sig_detvar_dict=None): #Takes the dictionary of all root files
+def Calculate_total_uncertainty(Params, hist_dict): #Takes the dictionary of all root files
+    BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
+    bkg_sample_names = ['bkg_overlay','bkg_EXT','bkg_dirt']
+    overlay_sys_names = ["ppfx_uncertainty","Genie_uncertainty","Reinteraction_uncertainty","overlay_DetVar_uncertainty"]
+    for HNL_mass in hist_dict:
+        bkg_stat_err_dict, bkg_sys_err_dict = {}, {} #Clean for each mass point
+        for name in bkg_sample_names:
+            bkg_stat_err_dict[name]=hist_dict[HNL_mass][name].errors() #Load in stat error from error saved in hist
+        sig_stat_err = hist_dict[HNL_mass]['signal'].errors()
+        if Params["Stats_only"] == True: #Set all systematic errors to zero
+            for name in bkg_sample_names:
+                bkg_sys_err_dict[name] = np.zeros_like(hist_dict[HNL_mass][name].errors())
+            sig_sys_err =  np.zeros_like(hist_dict[HNL_mass]['signal'].errors())
+        elif Params["Use_flat_sys"] == True:
+            for name in bkg_sample_names:
+                bkg_sys_err_dict[name] = hist_dict[HNL_mass][name].values()*Params["Flat_"+name+"_frac"]
+            sig_flux_err = hist_dict[HNL_mass]['signal'].values()*Params["Signal_flux_error"]
+            sig_detvar_err = hist_dict[HNL_mass]['signal'].values()*Params["Flat_sig_detvar"]
+            sig_sys_err = np.sqrt(sig_flux_err**2 + sig_detvar_err**2)
+        elif Params["Use_flat_sys"] == False:
+            overlay_sys_dict = {}
+            for sys in overlay_sys_names:
+                overlay_sys_dict[sys] = hist_dict[HNL_mass][sys].values()
+            bkg_sys_err_dict['bkg_overlay'] = Functions.add_all_errors_dict(overlay_sys_dict)
+            bkg_sys_err_dict['bkg_EXT'] = np.zeros_like(hist_dict[HNL_mass]['bkg_EXT'].errors())
+            bkg_sys_err_dict['bkg_dirt'] = hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_bkg_dirt_frac"]
+            
+            sig_detvar_err = hist_dict[HNL_mass]["signal_DetVar_uncertainty"].values()
+            sig_flux_err = hist_dict[HNL_mass]['signal'].values()*Params["Signal_flux_error"]
+            sig_sys_err = Functions.add_all_errors([sig_detvar_err,sig_flux_err])
+            
+        #Evaluating final stat+sys errors    
+        bkg_stat_plus_sys_dict={}
+        for name in bkg_sample_names:
+            bkg_stat_plus_sys_dict[name]=Functions.add_all_errors([bkg_stat_err_dict[name],bkg_sys_err_dict[name]]) #WRONG
+        
+        total_bkg_err = Functions.add_all_errors_dict(bkg_stat_plus_sys_dict) #Now adding the errors of overlay, EXT and dirt in quadrature
+        total_sig_err = Functions.add_all_errors([sig_stat_err,sig_sys_err])
+        
+        BKG_ERR_dict[HNL_mass] = total_bkg_err
+        SIGNAL_ERR_dict[HNL_mass] = total_sig_err
+    return BKG_ERR_dict, SIGNAL_ERR_dict
+
+def Uncertainty_breakdown(Params, hist_dict, bkg_reweight_err_dict=None, bkg_detvar_dict=None, sig_detvar_dict=None): #Takes the dictionary of all root files
+    BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
+    for HNL_mass in hist_dict:
+        bkg_stat_err_list = [hist_dict[HNL_mass]['bkg_overlay'].errors(), 
+                             hist_dict[HNL_mass]['bkg_EXT'].errors(), 
+                             hist_dict[HNL_mass]['bkg_dirt'].errors()]
+        sig_stat_err = hist_dict[HNL_mass]['signal'].errors()
+        print("Signal stat error:")
+        print(sig_stat_err)
+        if Params["Stats_only"] == True:
+        #As default the errors saved in the files are stat errors, this will change once I properly calculate them
+            bkg_err_list = bkg_stat_err_list
+            sig_err = sig_stat_err
+        elif Params["Use_flat_sys_bkg"] == True:
+            zero_bins = []
+            for i,val in enumerate(hist_dict[HNL_mass]['bkg_overlay'].values()):
+                if val == 0:
+                    zero_bins.append(i)
+                    print(f"{HNL_mass} last bin 0, setting error to 2.0")
+            if len(zero_bins) != 0:
+                bkg_sys_err_list = [hist_dict[HNL_mass]['bkg_overlay'].values()*Params["Flat_overlay_bkg_frac"] + np.ones_like(hist_dict[HNL_mass]['bkg_overlay'].values())*2.0, #This is horrible need to rewrite 
+                                    np.zeros_like(hist_dict[HNL_mass]['bkg_EXT'].errors()), #No systematic error on the EXT sample
+                                    hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]]
+            else:    
+                bkg_sys_err_list = [hist_dict[HNL_mass]['bkg_overlay'].values()*Params["Flat_overlay_bkg_frac"], 
+                                    np.zeros_like(hist_dict[HNL_mass]['bkg_EXT'].errors()), #No systematic error on the EXT sample
+                                    hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]]
+            bkg_err_list = [Functions.add_all_errors([bkg_stat_err_list[0],bkg_sys_err_list[0]]), #adding the sys and stat error in quadrature for each bkg type
+                            Functions.add_all_errors([bkg_stat_err_list[1],bkg_sys_err_list[1]]),
+                            Functions.add_all_errors([bkg_stat_err_list[2],bkg_sys_err_list[2]])]
+        elif Params["Use_flat_sys_bkg"] == False:
+            ppfx_unc = hist_dict[HNL_mass]["ppfx_uncertainty"].values()
+            genie_unc = hist_dict[HNL_mass]["Genie_uncertainty"].values()
+            reint_unc = hist_dict[HNL_mass]["Reinteraction_uncertainty"].values()
+            # detvar_unc = bkg_detvar_dict[HNL_mass]["Total_DetVar_uncertainty"].values() #Don't know what this looks like yet, as I haven't made
+            detvar_unc = hist_dict[HNL_mass]['bkg_overlay'].values()*Params["Overlay_detvar_frac"] #Just setting as flat. Too much variation in samples
+            tot_overlay_sys = Functions.add_all_errors([ppfx_unc, genie_unc, reint_unc, detvar_unc])
+            bkg_sys_err_list = [tot_overlay_sys, 
+                                np.zeros_like(hist_dict[HNL_mass]['bkg_EXT'].errors()), #No systematic error on the EXT sample
+                                hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]] #Don't have reweight or DetVar samples for dirt
+            bkg_err_list = [Functions.add_all_errors([bkg_stat_err_list[0],bkg_sys_err_list[0]]), #adding the sys and stat error in quadrature for each bkg type
+                            Functions.add_all_errors([bkg_stat_err_list[1],bkg_sys_err_list[1]]),
+                            Functions.add_all_errors([bkg_stat_err_list[2],bkg_sys_err_list[2]])]
+            bkg_stat_err_total = Functions.add_all_errors([bkg_stat_err_list[0],bkg_stat_err_list[1],bkg_stat_err_list[2]])
+            print("bkg stat error:")
+            print(bkg_stat_err_total)
+            print("bkg flux error:")
+            print(ppfx_unc)
+            print("bkg genie error:")
+            print(genie_unc)
+            print("bkg reint error:")
+            print(reint_unc)
+            
+        if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == True):
+            zero_bins = []
+            for i,val in enumerate(hist_dict[HNL_mass]['signal'].values()):
+                if val == 0:
+                    zero_bins.append(i)
+                    print(f"{HNL_mass} signal last bin 0, setting error to 2.0")
+            if len(zero_bins) != 0:
+                sig_sys_err = hist_dict[HNL_mass]['signal'].values()*Params["Flat_sig_frac"]+2.0
+            else:
+                sig_sys_err = hist_dict[HNL_mass]['signal'].values()*Params["Flat_sig_frac"]
+            sig_err = Functions.add_all_errors([sig_stat_err,sig_sys_err])
+        if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == False):
+            sig_detvar_err = sig_detvar_dict[HNL_mass]["Total_DetVar_uncertainty"].values()
+            sig_flux_err = hist_dict[HNL_mass]['signal'].values()*Params["Signal_flux_error"]
+            sig_err = Functions.add_all_errors([sig_stat_err,sig_detvar_err,sig_flux_err]) #Adding stat, detvar and flux errors in quadrature
+        total_bkg_err = Functions.add_all_errors(bkg_err_list) #Now adding the errors of overlay, EXT and dirt in quadrature
+        BKG_ERR_dict[HNL_mass] = total_bkg_err
+        SIGNAL_ERR_dict[HNL_mass] = sig_err
+        print("Total bkg error:")
+        print(total_bkg_err)
+        print("Total signal error:")
+        print(sig_err)
+    return BKG_ERR_dict, SIGNAL_ERR_dict
+
+def Calculate_total_uncertainty_OLD(Params, hist_dict, bkg_reweight_err_dict=None, bkg_detvar_dict=None, sig_detvar_dict=None): #Takes the dictionary of all root files
     BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
     for HNL_mass in Constants.HNL_mass_samples:
         bkg_stat_err_list = [hist_dict[HNL_mass]['bkg_overlay'].errors(), 
