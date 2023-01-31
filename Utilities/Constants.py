@@ -97,6 +97,9 @@ run1_event_numbers = {2: 36059,
                      "dirtoverlay": 569506,
                      "beamoff": 904362}
 
+run1_sum_weights = {"overlay": 867669.0,"dirtoverlay": 535760.1}
+run3_sum_weights = {"overlay": 704253.8,"dirtoverlay": 363852.9}
+
 run1_POT_scaling_dict = {2: 2.273110163825259e-06,
                          10: 4.478610916645953e-06,
                          20: 2.583047654702099e-12,
