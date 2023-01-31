@@ -444,6 +444,17 @@ def All_reweight_err(df, Multisim, var_name, BINS, x_range, Norm):
     cov /= Nuniverse
     results_dict[Multisim] = [cov,n_cv_tot,n_tot,bins]
     return results_dict
+
+def make_stat_err(var, bins, weights_times_SF):
+    """
+    Takes a variable, histogram bins and the full weights (can include multiplied by normalisation).
+    Returns the associated Poisson error on each bin.
+    """
+    hist_unweighted = np.histogram(var,bins=bins)[0]
+    hist_weighted = np.histogram(var,bins=bins,weights=weights_times_SF)[0]
+    Total_SF = hist_weighted/hist_unweighted
+    stat_err=np.sqrt(hist_unweighted)*Total_SF
+    return stat_err
     
 #Limit setting functions    
 def pyhf_params(Params):

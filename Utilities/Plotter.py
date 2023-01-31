@@ -438,7 +438,7 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
             dirtbkg=np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]
             bins_new=[]
             for i,bin_bkg in enumerate(totbkg):
-                if(offbkg[i]>1 or overlaybkg[i]>1):
+                if(overlaybkg[i]>1):
                     bins_new.append(bins_list[i])
 
             bins_new.append(bins_list[-1])
