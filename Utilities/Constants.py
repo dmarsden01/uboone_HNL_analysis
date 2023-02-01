@@ -95,7 +95,8 @@ run1_event_numbers = {2: 36059,
                      "245_pi0": 36698,
                      "overlay": 914729,
                      "dirtoverlay": 569506,
-                     "beamoff": 904362}
+                     "beamoff": 904362,
+                     "beamgood": 610496}
 
 run1_sum_weights = {"overlay": 867669.0,"dirtoverlay": 535760.1}
 run3_sum_weights = {"overlay": 704253.8,"dirtoverlay": 363852.9}
@@ -173,7 +174,8 @@ run3_event_numbers = {2: 45159,
                      "245_pi0": 44073,
                      "overlay": 748702,
                      "dirtoverlay": 389264,
-                     "beamoff": 3211097}    
+                     "beamoff": 3211097,
+                     "beamgood": 1104349}    
     
 run3_POT_scaling_dict = {2: 4.55623564219535e-06,
                          10: 8.724043160892894e-06,
