@@ -4,6 +4,7 @@ import matplotlib as mpl
 import numpy as np
 import math
 import pandas as pd
+import uproot
 import uproot3
 import functools
 
@@ -729,9 +730,12 @@ def Calculate_total_uncertainty_OLD(Params, hist_dict, bkg_reweight_err_dict=Non
 
 def Make_into_lists(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict):
     
-    def remove_first_half_hist(hist_list):
+    def remove_part_hist(hist_list, numbins):
         length = len(hist_list)
-        slice_at = int(np.floor(length/2))
+        slice_at = length - int(numbins)
+        if slice_at < 0:
+            print("Trying to use greater number of bins than available, using full dist.")
+            slice_at = 0
         sliced_hist = hist_list[slice_at:]
         return sliced_hist
     
@@ -741,11 +745,12 @@ def Make_into_lists(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict
         BKG_ERR = np.ndarray.tolist(BKG_ERR_dict[HNL_mass])
         SIGNAL = np.ndarray.tolist(SIGNAL_dict[HNL_mass])
         SIGNAL_ERR = np.ndarray.tolist(SIGNAL_ERR_dict[HNL_mass])
-        if Params["Use_second_half_only"] == True:
-            BKG=remove_first_half_hist(BKG)
-            BKG_ERR=remove_first_half_hist(BKG_ERR)
-            SIGNAL=remove_first_half_hist(SIGNAL)
-            SIGNAL_ERR=remove_first_half_hist(SIGNAL_ERR)
+        if Params["Use_part_only"] == True:
+            numbins = Params["Num_bins_for_calc"] #Number of bins in signal region to use for CLs calc
+            BKG=remove_part_hist(BKG, numbins)
+            BKG_ERR=remove_part_hist(BKG_ERR, numbins)
+            SIGNAL=remove_part_hist(SIGNAL, numbins)
+            SIGNAL_ERR=remove_part_hist(SIGNAL_ERR, numbins)
             
         BKG_dict_FINAL[HNL_mass] = BKG
         BKG_ERR_dict_FINAL[HNL_mass] = BKG_ERR
@@ -795,3 +800,41 @@ def check_duplicate_events(df):
     print("Number of duplicates is " + str(len(dupes)))
     print("Number of unique events is " + str(len(seen)))
     
+def Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_masses=Constants.HNL_mass_samples):
+    loc_hists = location
+
+    hist_dict_run1, hist_dict_run3, theta_dict = {}, {}, {}
+
+    #Loading in the .root files
+    if Params_pyhf["Load_lepton_hists"] == True:
+        for HNL_mass in HNL_masses:
+            hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'run1_{HNL_mass}MeV_' + filenames)
+            hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}MeV_' + filenames)
+            theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0] #assuming scaled theta is the same for all runs, only 1 value saved
+
+    if Params_pyhf["Load_pi0_hists"] == True:
+        pi0_dict_run1, pi0_dict_run3 = {}, {}
+        for HNL_mass in Constants.HNL_mass_pi0_samples:
+            hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'pi0/run1_{HNL_mass}MeV_' + filenames)
+            hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'pi0/run3_{HNL_mass}MeV_' + filenames)
+
+    #list_of_dicts = [hist_dict_run1, hist_dict_run3] #Add run2 when available, not using yet
+
+    theta_squared = Constants.theta_mu_4*Constants.theta_mu_4
+
+    all_hists_list = ['bkg_overlay;1', 'bkg_dirt;1', 'bkg_EXT;1', 'signal;1', 'data;1', 'theta;1', 
+                      'ppfx_uncertainty;1', 'Genie_uncertainty;1', 'Reinteraction_uncertainty;1', 
+                      'ppfx_uncertainty_frac;1', 'Genie_uncertainty_frac;1', 'Reinteraction_uncertainty_frac;1', 
+                      'overlay_DetVar_uncertainty;1', 'overlay_DetVar_uncertainty_frac;1', 'signal_DetVar_uncertainty;1', 'signal_DetVar_uncertainty_frac;1']
+    missing_hists = []
+    for hist_name in all_hists_list:
+        if hist_name not in hist_dict_run1[HNL_mass].keys(): missing_hists.append(hist_name)
+    if len(missing_hists) == 0: print("No missing histograms in Run1")
+    else:
+        print("Missing hists for Run1 are: ")
+        print(missing_hists)
+    print("thetas are:")
+    print(theta_dict)
+    print("Done")
+    
+    return hist_dict_run1, hist_dict_run3, theta_dict
