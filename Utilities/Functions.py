@@ -838,3 +838,13 @@ def Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_masse
     print("Done")
     
     return hist_dict_run1, hist_dict_run3, theta_dict
+
+#Limit plot
+def Pandafy(path):
+    cols = ['Mass','Value']
+    df = pd.read_csv(path,names=cols)
+    firstLine = pd.DataFrame([[df['Mass'][0],1.]],columns=cols)
+    lastLine = pd.DataFrame([[df['Mass'][-1:].values[0],1.]],columns=cols)
+    df = pd.concat([firstLine,df])
+    df = pd.concat([df,lastLine])
+    return df

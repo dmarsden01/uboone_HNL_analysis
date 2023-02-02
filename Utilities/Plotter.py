@@ -140,7 +140,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -316,7 +316,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         plt.arrow(arrow_place[0], arrow_place[1], arrow_place[2], arrow_place[3], color='green', shape='full',fill=False, 
                   length_includes_head=True, overhang=0.0, head_width=-0.1, head_length=0.15, lw=3)
     
-    if(logy == "True"):
+    if(logy == True):
         plt.yscale("log")
     else:
         plt.yscale("linear")

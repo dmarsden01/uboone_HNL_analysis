@@ -236,9 +236,11 @@ variable_names_dict = {'nslice':"Neutrino slice",
                        'shr_pz_v':"Shower z-momentum fraction",
                        'trk_theta_v':"Track theta [radians]",
                        'trk_phi_v':"Track phi [radians]",
-                       'trk_energy_hits_tot':"Total track energy [GeV]",
+                       'trk_energy_hits_tot':"Total track energy from hits [GeV]",
+                       'trk_energy_tot':"Total track energy [GeV]",
                        'trk_dir_z_v':"Track z-momentum fraction",
-                       'SliceCaloEnergy2':"Calorimatric energy in slice [MeV]"}
+                       'SliceCaloEnergy2':"Calorimatric energy in slice [MeV]",
+                       'shr_energy_tot':"Total shower energy [GeV]"}
 
 Multisim_univs = {"weightsPPFX":600,
                   "weightsGenie":600,
