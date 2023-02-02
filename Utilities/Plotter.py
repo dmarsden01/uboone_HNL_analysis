@@ -140,7 +140,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test"):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -363,13 +363,19 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     ylim = max(abs(np.nan_to_num(rat)))*1.1
     plt.ylim(0.7,1.3)
     # plt.ylim(0.9,1.1)
-    
+    plt.xlim(xlims)
     if xticks != []:
         plt.xticks(xticks)
     
     plt.xlabel(xlabel)
     
     plt.tight_layout(rect=[0, 0, 1, 0.92])
+    
+    if savefig==True:
+        plt.savefig(savename+".pdf")
+        plt.savefig(savename+".png")
+    if display == False:
+        plt.close()
           
 
 def HNL_scaling_calculator(samples=[], sample_norms=[]): #Prints the value which should be used to scale HNL hist to overlay hist
