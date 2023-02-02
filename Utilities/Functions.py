@@ -41,8 +41,8 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         Params["variables_MC"] = Variables.First_pass_vars_MC
     else:
         Params["variables_string"] = "my_vars"
-        Params["variables"] = Variables.New_variables
-        Params["variables_MC"] = Variables.New_variables_MC
+        Params["variables"] = Variables.Final_variable_list
+        Params["variables_MC"] = Variables.Final_variable_list_MC
 
     if Params["Run"] == "run1": Params["current"] = "FHC"
     elif Params["Run"] == "run3": Params["current"] = "RHC"
@@ -80,6 +80,32 @@ def Edit_Weight_Tune(df_to_Tune): #This is taken from Aditya's code, Owen also h
 def MC_weight_branch(df_MC): #Writes a new branch called "weight" including, ppfx, weightSplineTimesTune AND if pi0 are present, scales by pi0 factor
     df_MC["weight"] = df_MC["ppfx_cv"]*df_MC["weightSplineTimesTune"] 
     df_MC.loc[df_MC["npi0"]>0,"weight"] = df_MC["weight"][df_MC["npi0"]>0]*Constants.pi0_scaling_factor #If MC event contains pi0, need to scale down, derived from BNB data
+    
+def Make_fiducial_vars(df):
+    print(len(df))
+    n_pfps = df["n_pfps"].groupby(level="entry").apply(max)
+    df_placeholder = df.query("trk_sce_start_x_v>-1e4").copy()
+    print(len(df_placeholder))
+    min_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].min(axis=1).groupby(level="entry").apply(min)
+    max_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].max(axis=1).groupby(level="entry").apply(max)
+    
+    min_y=df_placeholder[["trk_sce_start_y_v","trk_sce_end_y_v"]].min(axis=1).groupby(level="entry").apply(min)
+    max_y=df_placeholder[["trk_sce_start_y_v","trk_sce_end_y_v"]].max(axis=1).groupby(level="entry").apply(max)
+    
+    min_z=df_placeholder[["trk_sce_start_z_v","trk_sce_end_z_v"]].min(axis=1).groupby(level="entry").apply(min)
+    max_z=df_placeholder[["trk_sce_start_z_v","trk_sce_end_z_v"]].max(axis=1).groupby(level="entry").apply(max)
+    
+    del df_placeholder
+    
+    df2 = df.copy()
+    
+    df2["min_x"]=np.array(np.repeat(min_x, np.array(n_pfps)))
+    df2["max_x"]=np.array(np.repeat(max_x, np.array(n_pfps)))
+    df2["min_y"]=np.array(np.repeat(min_y, np.array(n_pfps)))
+    df2["max_y"]=np.array(np.repeat(max_y, np.array(n_pfps)))
+    df2["min_z"]=np.array(np.repeat(min_z, np.array(n_pfps)))
+    df2["max_z"]=np.array(np.repeat(max_z, np.array(n_pfps)))
+    return df2
     
 def check_is_truth(df_MC, df_EXT, var): #This is for UNFLATTENED dataframes
     vals_MC = []
@@ -186,9 +212,11 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df_signal
                     new_signal = file.copy()
                     del(file)
-                    print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
-                    new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                    final_signal = Make_fiducial_vars(new_signal) #New since last save
                     del(new_signal)
+                    print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
+                    final_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                    del(final_signal)
             elif sample == "pi0_signal":
                 for HNL_mass in Constants.HNL_mass_pi0_samples:
                     file_loc = sample_loc[sample]+f"{HNL_mass}_pi0_Umu4_majorana_"+Params["current"]+".root"
@@ -200,9 +228,11 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df_signal
                     new_signal = file.copy()
                     del(file)
-                    print("Pickling "+Params["Run"]+ f" pi0 {HNL_mass}MeV file")
-                    new_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                    final_signal = Make_fiducial_vars(new_signal)
                     del(new_signal)
+                    print("Pickling "+Params["Run"]+ f" pi0 {HNL_mass}MeV file")
+                    final_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                    del(final_signal)
                     
             elif (Params["Load_single_file"] == True) and (isinstance(sample,int)):
                 HNL_mass = sample
@@ -215,9 +245,11 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                 file = df_signal
                 new_signal = file.copy()
                 del(file)
-                print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
-                new_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                final_signal = Make_fiducial_vars(new_signal)
                 del(new_signal)
+                print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
+                final_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                del(final_signal)
                     
             else:
                 uproot_file = uproot3.open(sample_loc[sample])[Constants.root_dir+'/'+Constants.main_tree]
@@ -231,8 +263,9 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df
                 new_file = file.copy()
                 del(file)
+                final_file = Make_fiducial_vars(new_signal)
                 print("Pickling "+Params["Run"] +f" {sample} file")
-                new_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
+                final_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
                 del(new_file)
 
 #POT counting

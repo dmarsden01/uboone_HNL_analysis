@@ -14,7 +14,16 @@ Preselection_dict = {"nslice":"nslice==1",
 "contained_fraction":"contained_fraction > 0.9",
 "trk_score_v":"trk_score_v < 0.97",
 "n_pfps":"n_pfps < 6"
-}#want to add topological score, maybe a cut to keep below 0.96
+}#want to add topological score, maybe a cut to keep below 0.96. Also should do a proper fiducial cut
+
+#From Owen
+max_x_cut=253
+min_x_cut=9
+max_y_cut=112
+min_y_cut=-112
+max_z_cut= 1020
+min_z_cut=14
+max_extent_cut=f"min_y>{min_y_cut} and max_y<{max_y_cut} and min_z>{min_z_cut} and max_z<{max_z_cut}" + " and "+f"min_x>{min_x_cut} and max_x<{max_x_cut}"
 
 Preselection_dict_pi0 = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",

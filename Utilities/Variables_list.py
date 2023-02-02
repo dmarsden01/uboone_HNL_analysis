@@ -32,6 +32,8 @@ sys_vars = ["weightsPPFX","weightsGenie","weightsReint"]
 
 swtrig_vars = ["swtrig_pre","swtrig_post"] #Think this is only for flash time plots
 
+Fiducial_variables = ["trk_sce_start_x_v","trk_sce_start_y_v","trk_sce_start_z_v","trk_sce_end_x_v","trk_sce_end_y_v","trk_sce_end_z_v" ]
+
 First_pass_vars = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars
 First_pass_vars_MC = event_vars + shower_vars + track_vars + multiplicity_vars + all_other_vars + weight_related
 First_pass_vars_for_BDT = shower_vars + track_vars + multiplicity_vars + all_other_vars
@@ -50,8 +52,19 @@ Additional_vars = ['shr_energy_tot','trk_energy_tot', 'n_showers']
 New_variables = event_vars + New_feature_list + Rest_for_preselection + Additional_vars + swtrig_vars
 New_variables_MC = New_variables + weight_related
 
-#Variables used in Pre-selection
 
+Final_features = ['shr_theta_v', 'shr_phi_v', 'shr_px_v', 'shr_py_v', 'shr_pz_v', 'shrclusdir0', 'shrclusdir1', 'shrclusdir2', 'shr_energy_tot', #shr related
+                  'trk_theta_v', 'trk_phi_v', 'trk_dir_x_v', 'trk_dir_y_v', 'trk_dir_z_v', 'trk_energy', 'trk_energy_hits_tot', 'trk_energy_tot', #track related
+                  'trk_score_v', 'trk_calo_energy_u_v', 'trk_end_x_v', 'trk_chipr_best', #rest track related
+                  'pfnplanehits_U', 'pfnplanehits_V', 'pfnplanehits_Y', 'NeutrinoEnergy2','SliceCaloEnergy2', 'nu_flashmatch_score', 'contained_sps_ratio', #energy/misc
+                  'flash_time', 'contained_fraction', 'trk_score', 'crtveto'] #rest for preselection
+
+
+#-------------FINAL VARIABLES------------------------#
+Final_variable_list = event_vars + multiplicity_vars + swtrig_vars + Fiducial_variables + Final_features
+Final_variable_list_MC = Final_variable_list + weight_related
+
+#Variables used in Pre-selection
 Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy2","contained_fraction","trk_score","trk_score_v","n_pfps"] + swtrig_vars
 Preselection_vars_MC = Preselection_vars + weight_related
 Preselection_vars_CRT = Preselection_vars+["crtveto"]
