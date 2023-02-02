@@ -7,7 +7,7 @@ sample_type = {"overlay":"MC",
 root_dir = 'nuselection'
 main_tree = 'NeutrinoSelectionFilter'
 
-Preselection_dict = {"nslice":"nslice==1",
+OLD_Preselection_dict = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",
 "nu_flashmatch_score":"nu_flashmatch_score < 15",#may need to take out.
 "NeutrinoEnergy2":"NeutrinoEnergy2 < 500",
@@ -21,9 +21,21 @@ max_x_cut=253
 min_x_cut=9
 max_y_cut=112
 min_y_cut=-112
-max_z_cut= 1020
+max_z_cut=1020
 min_z_cut=14
+
 max_extent_cut=f"min_y>{min_y_cut} and max_y<{max_y_cut} and min_z>{min_z_cut} and max_z<{max_z_cut}" + " and "+f"min_x>{min_x_cut} and max_x<{max_x_cut}"
+
+Preselection_dict = {"nslice":"nslice==1",
+"flash_time":"flash_time > 6.55 and flash_time < 16.5",
+"nu_flashmatch_score":"nu_flashmatch_score < 15",#may need to take out.
+"NeutrinoEnergy2":"NeutrinoEnergy2 < 500",
+"Fiducial_cut":max_extent_cut,
+"contained_fraction":"contained_fraction > 0.9",
+"trk_score_v":"trk_score_v < 0.97",
+"n_pfps":"n_pfps < 6"
+}
+
 
 Preselection_dict_pi0 = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",
@@ -251,7 +263,8 @@ variable_names_dict = {'nslice':"Neutrino slice",
                        'SliceCaloEnergy2':"Calorimatric energy in slice [MeV]",
                        'shr_energy_tot':"Total shower energy [GeV]",
                        'trk_chipr_best':'trk_chipr_best',
-                       'trk_calo_energy_u_v':'Track energies U plane'}
+                       'trk_calo_energy_u_v':'Track energies U plane',
+                       "Fiducial_cut": "Fiducial volume"}
 
 Multisim_univs = {"weightsPPFX":600,
                   "weightsGenie":600,

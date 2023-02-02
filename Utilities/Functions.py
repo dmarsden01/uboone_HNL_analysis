@@ -82,21 +82,17 @@ def MC_weight_branch(df_MC): #Writes a new branch called "weight" including, ppf
     df_MC.loc[df_MC["npi0"]>0,"weight"] = df_MC["weight"][df_MC["npi0"]>0]*Constants.pi0_scaling_factor #If MC event contains pi0, need to scale down, derived from BNB data
     
 def Make_fiducial_vars(df):
-    print(len(df))
     n_pfps = df["n_pfps"].groupby(level="entry").apply(max)
     df_placeholder = df.query("trk_sce_start_x_v>-1e4").copy()
-    print(len(df_placeholder))
+    
     min_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].min(axis=1).groupby(level="entry").apply(min)
     max_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].max(axis=1).groupby(level="entry").apply(max)
-    
     min_y=df_placeholder[["trk_sce_start_y_v","trk_sce_end_y_v"]].min(axis=1).groupby(level="entry").apply(min)
     max_y=df_placeholder[["trk_sce_start_y_v","trk_sce_end_y_v"]].max(axis=1).groupby(level="entry").apply(max)
-    
     min_z=df_placeholder[["trk_sce_start_z_v","trk_sce_end_z_v"]].min(axis=1).groupby(level="entry").apply(min)
     max_z=df_placeholder[["trk_sce_start_z_v","trk_sce_end_z_v"]].max(axis=1).groupby(level="entry").apply(max)
     
     del df_placeholder
-    
     df2 = df.copy()
     
     df2["min_x"]=np.array(np.repeat(min_x, np.array(n_pfps)))
@@ -263,10 +259,11 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df
                 new_file = file.copy()
                 del(file)
-                final_file = Make_fiducial_vars(new_signal)
+                final_file = Make_fiducial_vars(new_file)
+                del(new_file)
                 print("Pickling "+Params["Run"] +f" {sample} file")
                 final_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
-                del(new_file)
+                del(final_file)
 
 #POT counting
 def POT_counter(file): #Takes uproot file
