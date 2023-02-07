@@ -476,7 +476,7 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
             plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(HNL_mass) + "MeV_" + logscale + save_str + ".png")
         plt.show()
         
-def Plot_BDT_output_data(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
+def Plot_BDT_output_data(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0, dpi=100):
     
     if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
     if(samples==[]): raise Exception("Specify samples")
@@ -510,15 +510,16 @@ def Plot_BDT_output_data(HNL_masses=[], samples=[], sample_norms=[], colours={},
         bkg_weights=[sample_norms['overlay_test'],sample_norms['dirtoverlay'],sample_norms['beamoff']]
         bkg_colors=[colours['overlay_test'],colours['dirtoverlay'],colours['beamoff']]
         labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
+        data_label = "NuMI Data"
         
-        x,y=np.histogram(var_Data,bins=bins,range=xlims,density=density)
-        x1,y=np.histogram(var_Data,bins=bins,range=xlims)
+        x,y=np.histogram(dat_val,bins=bins,range=xlims,density=density)
+        x1,y=np.histogram(dat_val,bins=bins,range=xlims)
         bin_center = [(y[i] + y[i+1])/2. for i in range(len(y)-1)]
-        dat_val=x
+        dat_placeholder=x
         # dat_err=np.sqrt(x1)*Functions.safe_div(x,x1) #need to write one for arrays instead of single values.
         dat_err=np.sqrt(x1)*np.nan_to_num(x/x1)
         
-        plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
+        plt.errorbar(bin_center,dat_placeholder,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
         
         bins_list = np.histogram(bkg_scores[0],bins=bins,range=xlims)[1] #For mergebins part
               
