@@ -774,7 +774,7 @@ def Calculate_total_uncertainty_OLD(Params, hist_dict, bkg_reweight_err_dict=Non
         SIGNAL_ERR_dict[HNL_mass] = sig_err
     return BKG_ERR_dict, SIGNAL_ERR_dict
 
-def Make_into_lists(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict):
+def Make_into_lists_OLD(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict):
     
     def remove_part_hist(hist_list, numbins):
         length = len(hist_list)
@@ -805,6 +805,46 @@ def Make_into_lists(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict
         
     output_dict = {"BKG_dict":BKG_dict_FINAL, "BKG_ERR_dict":BKG_ERR_dict_FINAL, 
                    "SIGNAL_dict":SIGNAL_dict_FINAL, "SIGNAL_ERR_dict":SIGNAL_ERR_dict_FINAL}
+        
+    return output_dict
+
+def Make_into_lists(Params, BKG_dict, SIGNAL_dict, TOT_ERR_dict):
+    
+    def remove_part_hist(hist_list, numbins):
+        length = len(hist_list)
+        slice_at = length - int(numbins)
+        if slice_at < 0:
+            print("Trying to use greater number of bins than available, using full dist.")
+            slice_at = 0
+        sliced_hist = hist_list[slice_at:]
+        return sliced_hist
+    
+    BKG_dict_FINAL, SIGNAL_dict_FINAL= {}, {}
+    ERR_dict_FINAL = {}
+    for HNL_mass in BKG_dict:
+        ERR_list_dict = {}
+        BKG = np.ndarray.tolist(BKG_dict[HNL_mass])
+        SIGNAL = np.ndarray.tolist(SIGNAL_dict[HNL_mass])
+        for err_dict in TOT_ERR_dict:
+            ERR_list_dict[err_dict]=np.ndarray.tolist(TOT_ERR_dict[err_dict][HNL_mass])
+        if Params["Use_part_only"] == True:
+            numbins = Params["Num_bins_for_calc"] #Number of bins in signal region to use for CLs calc
+            BKG=remove_part_hist(BKG, numbins)
+            SIGNAL=remove_part_hist(SIGNAL, numbins)
+            for err_dict in ERR_list_dict:
+                ERR_list_dict[err_dict]=remove_part_hist(ERR_list_dict[err_dict], numbins)
+            
+        BKG_dict_FINAL[HNL_mass] = BKG
+        SIGNAL_dict_FINAL[HNL_mass] = SIGNAL
+        ERR_dict_FINAL[HNL_mass] = ERR_list_dict
+
+    output_dict = {"BKG_dict":BKG_dict_FINAL, "SIGNAL_dict":SIGNAL_dict_FINAL}
+    for err_dict in TOT_ERR_dict:
+        new_err_dict_placeholder = {}
+        for HNL_mass in BKG_dict:
+            new_err_dict_placeholder[HNL_mass] = ERR_dict_FINAL[HNL_mass][err_dict]
+        
+        output_dict.update({err_dict:new_err_dict_placeholder})
         
     return output_dict
 
