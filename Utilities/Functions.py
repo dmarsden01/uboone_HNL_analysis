@@ -934,3 +934,8 @@ def Pandafy(path):
     df = pd.concat([firstLine,df])
     df = pd.concat([df,lastLine])
     return df
+
+def Pandafy_new(path):
+    cols = ['Mass','Value']
+    df = pd.read_csv(path,names=cols)
+    return df
