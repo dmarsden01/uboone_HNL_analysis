@@ -895,14 +895,19 @@ def Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_masse
     if Params_pyhf["Load_lepton_hists"] == True:
         for HNL_mass in HNL_masses:
             hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'run1_{HNL_mass}MeV_' + filenames)
-            hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}MeV_' + filenames)
+            if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass] 
+            else:
+                hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}MeV_' + filenames)
             theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0] #assuming scaled theta is the same for all runs, only 1 value saved
 
     if Params_pyhf["Load_pi0_hists"] == True:
         pi0_dict_run1, pi0_dict_run3 = {}, {}
         for HNL_mass in Constants.HNL_mass_pi0_samples:
             hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'pi0/run1_{HNL_mass}MeV_' + filenames)
-            hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'pi0/run3_{HNL_mass}MeV_' + filenames)
+            if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass]
+            else:
+                hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'pi0/run3_{HNL_mass}MeV_' + filenames)
+            theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0]
 
     #list_of_dicts = [hist_dict_run1, hist_dict_run3] #Add run2 when available, not using yet
 
