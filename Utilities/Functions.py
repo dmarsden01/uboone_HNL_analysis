@@ -25,6 +25,25 @@ def Shannon_entropy_M(Total_entries, Max_entries_in_bin):
     M = np.log2(Total_entries)/(np.log2(Total_entries/Max_entries_in_bin)+1)
     return M
 
+def Get_resolution(axis, Num_pixels):
+    """
+    Given the number of pixels in one dimension, returns the number which should be in the other,
+    so that the resolution is in the ratio 1920x1080.
+    """
+    if (axis!="x") and (axis!="y"): 
+        print("First argument should be \"x\" or \"y\". Exiting.")
+        return 0
+    SF = 1920/1080
+    if axis=="x":
+        print("Given x pixels, calculating y pixels.")
+        result = round(Num_pixels/SF)
+    if axis=="y":
+        print("Given y pixels, calculating x pixels.")
+        result = round(Num_pixels*SF)
+    print(result)
+    return result
+        
+
 def create_sample_list(Params): #Returns an extended parameter dict and a the list of samples to run over
     if Params["FLATTEN"] == True: Params["Flat_state"] = "flattened"
     else: Params["Flat_state"] = "unflattened"
