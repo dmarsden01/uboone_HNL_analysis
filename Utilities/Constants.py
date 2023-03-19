@@ -7,6 +7,8 @@ sample_type = {"overlay":"MC",
 root_dir = 'nuselection'
 main_tree = 'NeutrinoSelectionFilter'
 
+average_HNL_direction = [0.32, 0.74, -0.59]
+
 OLD_Preselection_dict = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",
 "nu_flashmatch_score":"nu_flashmatch_score < 15",#may need to take out.

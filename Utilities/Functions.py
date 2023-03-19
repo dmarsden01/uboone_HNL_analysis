@@ -56,8 +56,8 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.sys_vars
     elif Params["Load_truth_vars"]:
         Params["variables_string"] = "Truth_vars"
-        Params["variables"] = Variables.First_pass_vars
-        Params["variables_MC"] = Variables.First_pass_vars_MC
+        Params["variables"] = Variables.event_vars
+        Params["variables_MC"] = Variables.event_vars
     else:
         Params["variables_string"] = "my_vars"
         Params["variables"] = Variables.Final_variable_list
@@ -174,6 +174,11 @@ def make_common_evs_df(df_list):
     print("Length is of common events list is " + str(len(overlapping_df)))
     return overlapping_df
 
+# def make_common_indices_df(df_list):
+#     overlapping_df = functools.reduce(lambda left,right: pd.merge(left, right, on=['rse_id'], how='inner'), df_list)
+#     print("Length is of common events list is " + str(len(overlapping_df)))
+#     return overlapping_df
+
 def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
     for sample in samples: #Looping over all samples, should make a function for this.
         if sample in Constants.Detector_variations: #Checks if it is an overlay Detector Variation sample
@@ -227,7 +232,10 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df_signal
                     new_signal = file.copy()
                     del(file)
-                    final_signal = Make_fiducial_vars(new_signal) #New since last save
+                    if Params["Load_truth_vars"] == False:
+                        final_signal = Make_fiducial_vars(new_signal) #New since last save
+                    if Params["Load_truth_vars"] == True:
+                        final_signal = new_signal.copy()
                     del(new_signal)
                     print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
                     final_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
@@ -243,7 +251,10 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df_signal
                     new_signal = file.copy()
                     del(file)
-                    final_signal = Make_fiducial_vars(new_signal)
+                    if Params["Load_truth_vars"] == False:
+                        final_signal = Make_fiducial_vars(new_signal)
+                    if Params["Load_truth_vars"] == True:
+                        final_signal = new_signal.copy()
                     del(new_signal)
                     print("Pickling "+Params["Run"]+ f" pi0 {HNL_mass}MeV file")
                     final_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
