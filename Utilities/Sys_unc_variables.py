@@ -25,7 +25,8 @@ run1_Sys_unc = {"contained_fraction":[0.11, 0.145], #Entries are [PPFX, Genie] f
                 "SliceCaloEnergy2": [0.134,0.138],
                 "shr_energy_tot": [0.131,0.145],
                 "trk_energy_tot": [0.136,0.136],
-                "n_showers": [0.131,0.165]} 
+                "n_showers": [0.131,0.165],
+                "flash_time": [0.116,0.124]} 
 
 run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] fractions, for overlay and with swtrig and nslice applied
                 "NeutrinoEnergy2": [0.113, 0.113], 
@@ -54,4 +55,5 @@ run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] 
                 "SliceCaloEnergy2": [0.132,0.142],
                 "shr_energy_tot": [0.128,0.149],
                 "trk_energy_tot": [0.134,0.141],
-                "n_showers": [0.16,0.189]} 
+                "n_showers": [0.16,0.189],
+                "flash_time": [0.112,0.127]} 

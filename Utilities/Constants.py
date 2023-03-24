@@ -236,7 +236,7 @@ sample_colours = {'overlay':'mediumblue',
                   'signal':'red'}
 
 variable_names_dict = {'nslice':"Neutrino slice",
-                       'flash_time': "Flash time",
+                       'flash_time': r"Flash time [$\mu$s]",
                        'nu_flashmatch_score': "Flashmatch score",
                        'NeutrinoEnergy2':"Energy in slice",
                        'contained_fraction':"Containted fraction",
