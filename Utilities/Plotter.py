@@ -38,7 +38,7 @@ def sci_notation(num, decimal_digits=0, precision=None, exponent=None):
     if precision is None:
         precision = decimal_digits
 
-    return r"{0:.{1}f}\cdot10^{{{{".format(coeff,precision)+"{0:d}".format(exponent)+"}}$"
+    return r"${0:.{1}f}\times10^{{{{".format(coeff,precision)+"{0:d}".format(exponent)+"}}$"
 
 
 def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = "False", cutline = 0.0, show_ev_nums=True):
@@ -140,7 +140,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test"):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -259,6 +259,14 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     Overlaynum=sum(weight_Overlay) 
     HNL_num=sum(weight_signal)
     
+    if HNL_scale_label==False: HNL_label = f"{HNL_mass} MeV HNL"
+    if HNL_scale_label==True: 
+        theta = 1e-4
+        theta_2 = theta**2
+        new_theta_2 = np.sqrt(HNLplotscale)*theta_2
+        theta_2_label = sci_notation(new_theta_2, decimal_digits=0)
+        HNL_label = f"{HNL_mass} MeV HNL \n" + r"$|U_{\mu4}|^2$ = " + theta_2_label
+    
     if show_ev_nums==True:
         labels_sample = {'overlay':fr"In-Cryo $\nu$ ({Overlaynum:.1f})",
                          'dirtoverlay':fr"Out-Cryo $\nu$ ({Dirtnum:.1f})",
@@ -271,9 +279,10 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         labels_sample = {'overlay':fr"In-Cryo $\nu$",
                          'dirtoverlay':fr"Out-Cryo $\nu$",
                          'beamoff':f"Beam-Off",
-                         'signal':f"{HNL_mass} MeV HNL"}
+                         'signal':HNL_label}
+                         #'signal':f"{HNL_mass} MeV HNL"}
         # labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
-        sig_label = [f"{HNL_mass} MeV HNL"]
+        sig_label = [HNL_label]
         data_label = "NuMI Data"
     
     plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data

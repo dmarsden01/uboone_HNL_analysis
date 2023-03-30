@@ -26,7 +26,14 @@ run1_Sys_unc = {"contained_fraction":[0.11, 0.145], #Entries are [PPFX, Genie] f
                 "shr_energy_tot": [0.131,0.145],
                 "trk_energy_tot": [0.136,0.136],
                 "n_showers": [0.131,0.165],
-                "flash_time": [0.116,0.124]} 
+                "flash_time": [0.116,0.124],
+                "nslice": [0.117,0.131],
+                "min_x": [0.134,0.133],
+                "max_x": [0.138,0.138],
+                "min_y": [0.139,0.139],
+                "max_y": [0.139,0.138],
+                "min_z": [0.134,0.132],
+                "max_z": [0.137,0.137]} 
 
 run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] fractions, for overlay and with swtrig and nslice applied
                 "NeutrinoEnergy2": [0.113, 0.113], 
@@ -56,4 +63,11 @@ run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] 
                 "shr_energy_tot": [0.128,0.149],
                 "trk_energy_tot": [0.134,0.141],
                 "n_showers": [0.16,0.189],
-                "flash_time": [0.112,0.127]} 
+                "flash_time": [0.112,0.127],
+                "nslice": [0.111,0.132],
+                "min_x": [0.132,0.138],
+                "max_x": [0.137,0.142],
+                "min_y": [0.139,0.143],
+                "max_y": [0.137,0.142],
+                "min_z": [0.132,0.136],
+                "max_z": [0.135,0.14]} 

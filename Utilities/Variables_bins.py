@@ -30,4 +30,10 @@ bins_var = {'shrclusdir2':np.linspace(0,360, 21),
             'crtveto':np.linspace(-0.5,1.5,2),
             'n_showers':np.linspace(-0.5,5.5,7),
             'NeutrinoEnergy2':np.linspace(0,500,21),
-            'trk_score':np.linspace(0.5,1.0,11)}
+            'trk_score':np.linspace(0.5,1.0,11),
+            'min_x':np.linspace(9,253,41),
+            'max_x':np.linspace(9,253,41),
+            'min_y':np.linspace(-112,112,41),
+            'max_y':np.linspace(-112,112,41),
+            'min_z':np.linspace(14,1020,41),
+            'max_z':np.linspace(14,1020,41)}
