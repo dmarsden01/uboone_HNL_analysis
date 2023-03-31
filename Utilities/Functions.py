@@ -75,11 +75,17 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
     if Params["Load_Signal_DetVars"] == True:
         # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
         if Params["Run"] == "run1":
-            for HNL_mass in [50, 100, 150, 180, 200]:
+            for HNL_mass in [50, 100, 150]:
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
         if Params["Run"] == "run3":
-            for HNL_mass in [2, 10, 20, 50, 100, 180, 200, 220, 240, 245]: #Don't have 150MeV sample yet
+            for HNL_mass in [2, 10, 20, 50, 100]: #Don't have 150MeV sample yet
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_"+DetVar]
+    if Params["Load_pi0_signal_DetVars"] == True:
+        if Params["Run"] == "run1": print("There are no pi0 detvar samples for run1.")
+        if Params["Run"] == "run3":
+            for HNL_mass in [150, 180, 200, 220, 240,245]: #Don't have 150MeV sample yet
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True: samples.extend(["beamgood"])
@@ -101,8 +107,9 @@ def MC_weight_branch(df_MC): #Writes a new branch called "weight" including, ppf
     df_MC.loc[df_MC["npi0"]>0,"weight"] = df_MC["weight"][df_MC["npi0"]>0]*Constants.pi0_scaling_factor #If MC event contains pi0, need to scale down, derived from BNB data
     
 def Make_fiducial_vars(df):
-    n_pfps = df["n_pfps"].groupby(level="entry").apply(max)
+    n_pfps = df["n_pfps"].groupby(level="entry").apply(max) #OLD way, gave an error with one sample
     df_placeholder = df.query("trk_sce_start_x_v>-1e4").copy()
+    # n_pfps = df_placeholder["n_pfps"].groupby(level="entry").apply(max) #New way as of 31 March
     
     min_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].min(axis=1).groupby(level="entry").apply(min)
     max_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].max(axis=1).groupby(level="entry").apply(max)
@@ -186,17 +193,25 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
             NuMI_MC_overlay=uproot3.open(f"../NuMI_MC/DetVars/neutrinoselection_filt_"+Params["Run"]+f"_overlay_{sample}.root")[Constants.root_dir+"/"+Constants.main_tree]
             df_overlay = NuMI_MC_overlay.pandas.df(Params["variables_MC"], flatten=Params["FLATTEN"])
             file = df_overlay
-            Edit_Weight_Tune(file)
-            MC_weight_branch(file)
-            make_unique_ev_id(file) #This creates "rse_id" branch
+            new_file = file.copy()
+            del(file)
+            if Params["Run"]=="run3":
+                print("skipping fiducal vars")
+                final_file = new_file.copy() # Not making fiducial variables because of broken thetaXZ file
+            else:
+                final_file = Make_fiducial_vars(new_file)
+            del(new_file)
+            Edit_Weight_Tune(final_file)
+            MC_weight_branch(final_file)
+            make_unique_ev_id(final_file) #This creates "rse_id" branch
             if Params["Only_keep_common_DetVar_evs"] == True:
-                filtered = file.loc[(file['rse_id'].isin(common_evs['rse_id']))]
+                filtered = final_file.loc[(final_file['rse_id'].isin(common_evs['rse_id']))]
                 new_overlay = filtered.copy()
-                del(file)
+                del(final_file)
                 del(filtered)
             else:
-                new_overlay = file.copy()
-                del(file)
+                new_overlay = final_file.copy()
+                del(final_file)
             print("Pickling "+Params["Run"]+f" overlay {sample} file")
             new_overlay.to_pickle(loc_pkls+"DetVars/overlay_"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+save_str+".pkl")
             del(new_overlay)
@@ -206,17 +221,21 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
             NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
             df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
             file = df_signal
-            file = make_unique_ev_id(file) #This creates "rse_id" branch
+            new_file = file.copy()
+            del(file)
+            final_file = Make_fiducial_vars(new_file)
+            del(new_file)
+            final_file = make_unique_ev_id(final_file) #This creates "rse_id" branch
             if Params["Only_keep_common_DetVar_evs"] == True:
-                filtered = file.loc[(file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
+                filtered = final_file.loc[(final_file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
                 new_overlay = filtered.copy()
-                del(file)
+                del(final_file)
                 del(filtered)
             else:
-                new_overlay = file.copy()
-                del(file)
+                new_overlay = final_file.copy()
+                del(final_file)
             #new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+".pkl")
-            new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+".pkl")
+            new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+save_str+".pkl")
             del(new_overlay)
         else: #Standard sample types
             print(f"Loading {sample} "+Params["Run"]+" file(s) with uproot")

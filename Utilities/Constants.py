@@ -249,6 +249,11 @@ sample_colours = {'overlay':'mediumblue',
                   'beamoff':'limegreen',
                   'signal':'red'}
 
+presel_var_names = {'nslice':"Neutrino slice", 'flash_time':"Flash time", 'nu_flashmatch_score':"Flashmatch score", 
+                    'NeutrinoEnergy2':"Energy in slice", 'Fiducial_cut':"Fiducial volume", 
+                    'contained_fraction':"Containted fraction", 'trk_score_v':"Track score",'trk_score':"Track score",
+                    'n_pfps':"Object multiplicity", 'crtveto':"CRT veto"}
+
 variable_names_dict = {'nslice':"Neutrino slice", #Should contain all names for possible variables to be plotted
                        'flash_time': r"Flash time [$\mu$s]",
                        'nu_flashmatch_score': "Flashmatch score",
