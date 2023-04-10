@@ -52,12 +52,12 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
 
     if Params["only_presel"]:
         Params["variables_string"] = "Presel_vars"
-        Params["variables"] = Variables.Preselection_vars_CRT
-        Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.sys_vars
+        Params["variables"] = Variables.Preselection_vars_CRT + Variables.event_vars
+        Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.event_vars
     elif Params["Load_truth_vars"]:
         Params["variables_string"] = "Truth_vars"
-        Params["variables"] = Variables.event_vars
-        Params["variables_MC"] = Variables.event_vars
+        Params["variables"] = Variables.event_vars + Variables.event_vars
+        Params["variables_MC"] = Variables.event_vars + Variables.event_vars
     else:
         Params["variables_string"] = "my_vars"
         Params["variables"] = Variables.Final_variable_list
@@ -251,9 +251,9 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df_signal
                     new_signal = file.copy()
                     del(file)
-                    if Params["Load_truth_vars"] == False:
+                    if (Params["Load_truth_vars"] == False) and (Params["FLATTEN"] == True):
                         final_signal = Make_fiducial_vars(new_signal) #New since last save
-                    if Params["Load_truth_vars"] == True:
+                    else:
                         final_signal = new_signal.copy()
                     del(new_signal)
                     print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
@@ -308,7 +308,10 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                     file = df
                 new_file = file.copy()
                 del(file)
-                final_file = Make_fiducial_vars(new_file)
+                if (Params["Load_truth_vars"] == False) and (Params["FLATTEN"] == True):
+                    final_file = Make_fiducial_vars(new_file)
+                else:
+                    final_file = new_file.copy()
                 del(new_file)
                 print("Pickling "+Params["Run"] +f" {sample} file")
                 final_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
