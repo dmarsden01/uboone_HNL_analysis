@@ -85,7 +85,7 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
     if Params["Load_pi0_signal_DetVars"] == True:
         if Params["Run"] == "run1": print("There are no pi0 detvar samples for run1.")
         if Params["Run"] == "run3":
-            for HNL_mass in [150, 180, 200, 220, 240,245]: #Don't have 150MeV sample yet
+            for HNL_mass in [150, 180, 220, 240,245]: #200 is broken for some reason
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True: samples.extend(["beamgood"])
@@ -234,9 +234,31 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
             else:
                 new_overlay = final_file.copy()
                 del(final_file)
-            #new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+".pkl")
             new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+save_str+".pkl")
             del(new_overlay)
+                
+        elif Params["Load_pi0_signal_DetVars"] == True: #I should ONLY load these samples in this case.
+            first_str = sample.split("_")[0]
+            HNL_mass = int(first_str)
+            NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/pi0/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
+            df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
+            file = df_signal
+            new_file = file.copy()
+            del(file)
+            final_file = Make_fiducial_vars(new_file)
+            del(new_file)
+            final_file = make_unique_ev_id(final_file) #This creates "rse_id" branch
+            if Params["Only_keep_common_DetVar_evs"] == True:
+                filtered = final_file.loc[(final_file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
+                new_overlay = filtered.copy()
+                del(final_file)
+                del(filtered)
+            else:
+                new_overlay = final_file.copy()
+                del(final_file)
+            new_overlay.to_pickle(loc_pkls+"Signal_DetVars/pi0/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+save_str+".pkl")
+            del(new_overlay)
+            
         else: #Standard sample types
             print(f"Loading {sample} "+Params["Run"]+" file(s) with uproot")
             # if Constants.sample_type[sample] == "MC_signal": #Meant to be only e+e- signal samples
@@ -403,15 +425,27 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
 
 def create_sig_detsys_samples_list(Params): #Returns the list of samples to run over
     samples = [] #A list of all the samples which will be loaded and pickled
+    masses = []
     # for HNL_mass in Constants.HNL_mass_samples:
-    if Params["Run"] == "run1":
-        for HNL_mass in [150]: #While I only have 150MeV sample
-            for DetVar in Constants.Detector_variations:
-                samples+=[str(HNL_mass)+"_"+DetVar]
-    if Params["Run"] == "run3":
-        for HNL_mass in [2, 10, 20, 50, 100, 180, 200, 220, 240, 245]: #Don't have 150MeV sample yet
-            for DetVar in Constants.Detector_variations:
-                samples+=[str(HNL_mass)+"_"+DetVar]
+    if Params["Load_lepton_signal"] == True:
+        if Params["Run"] == "run1":
+            for HNL_mass in [150]: #While I only have 150MeV sample
+                masses+=[HNL_mass]
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_"+DetVar]
+        if Params["Run"] == "run3":
+            for HNL_mass in [2, 10, 20, 50, 100]: #Don't have 150MeV sample yet
+                masses+=[HNL_mass]
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_"+DetVar]
+    if Params["Load_pi0_signal"] == True:
+        if Params["Run"] == "run1":
+            print("There are no run1 pi0 detector variation samples")
+        if Params["Run"] == "run3":
+            for HNL_mass in [150,180,220,240,245]: #200 broken for some reason
+                masses+=[HNL_mass]
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_"+DetVar]
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n")
     print(samples)
@@ -420,7 +454,7 @@ def create_sig_detsys_samples_list(Params): #Returns the list of samples to run 
         Params["logit_str"] = "logit"
     else: Params["logit_str"] = "standard"
     
-    return samples
+    return samples, masses
 
 def SaveToRoot(nbins,xlims,bkg_overlay,bkg_dirt,bkg_EXT,sig,data,fileName='test.root'):
     nBins = nbins
