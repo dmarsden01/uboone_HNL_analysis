@@ -894,6 +894,15 @@ def Make_into_lists_OLD(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_
         
     return output_dict
 
+def remove_part_hist(hist_list, numbins):
+        length = len(hist_list)
+        slice_at = length - int(numbins)
+        if slice_at < 0:
+            print("Trying to use greater number of bins than available, using full dist.")
+            slice_at = 0
+        sliced_hist = hist_list[slice_at:]
+        return sliced_hist
+
 def Make_into_lists(Params, BKG_dict, SIGNAL_dict, TOT_ERR_dict):
     
     def remove_part_hist(hist_list, numbins):
