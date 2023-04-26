@@ -42,15 +42,14 @@ def Get_resolution(axis, Num_pixels):
         result = round(Num_pixels*SF)
     print(result)
     return result
-        
 
-def create_sample_list(Params): #Returns an extended parameter dict and a the list of samples to run over
+def new_create_sample_list(Params):
     if Params["FLATTEN"] == True: Params["Flat_state"] = "flattened"
     else: Params["Flat_state"] = "unflattened"
     if Params["Only_keep_common_DetVar_evs"] == True: Params["Reduced_state"] = "reduced_evs"
     else: Params["Reduced_state"] = "all_evs"
 
-    if Params["only_presel"]:
+    if Params["only_presel"]: #Only loading variables for preselection plots
         Params["variables_string"] = "Presel_vars"
         Params["variables"] = Variables.Preselection_vars_CRT + Variables.event_vars
         Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.event_vars
@@ -59,7 +58,70 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
         Params["variables"] = Variables.event_vars + Variables.event_vars
         Params["variables_MC"] = Variables.event_vars + Variables.event_vars
     else:
-        Params["variables_string"] = "my_vars"
+        Params["variables_string"] = "my_vars" #Standard variables I use
+        Params["variables"] = Variables.Final_variable_list
+        Params["variables_MC"] = Variables.Final_variable_list_MC
+
+    if Params["Run"] == "run1": Params["current"] = "FHC"
+    elif Params["Run"] == "run3": Params["current"] = "RHC"
+    else: print("Need to choose either \"run1\" or \"run3\"")
+    
+    samples = []
+    if Params["Load_standard_bkgs"] == True: samples.extend(["overlay","dirtoverlay","beamoff"])
+    if Params["Load_data"] == True: samples.extend(["beamgood"])
+    if Params["Load_DetVars"] == True: samples.extend(Constants.Detector_variations)
+    if Params["Load_single_file"] == True: samples = [Params["single_file"]]
+    #-----Signal-----#
+    if Params["Load_lepton_signal"] == True:
+        for mass in Constants.HNL_mass_samples:
+            samples +=[str(mass) + "_ee"]
+    if Params["Load_pi0_signal"] == True:
+        for mass in Constants.HNL_mass_pi0_samples:
+            samples +=[str(mass) + "_pi0"]
+    if Params["Load_lepton_dirac"] == True:
+        for mass in Constants.HNL_ee_dirac_mass_samples:
+            samples +=[str(mass) + "_ee_dirac"]
+    if Params["Load_pi0_dirac"] == True:
+        for mass in Constants.HNL_pi0_dirac_mass_samples:
+            samples +=[str(mass) + "_pi0_dirac"]
+    #-----Signal DetVars-----#
+    if Params["Load_Signal_DetVars"] == True:
+        # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
+        if Params["Run"] == "run1":
+            for HNL_mass in [50, 100, 150]:
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_ee_"+DetVar]
+        if Params["Run"] == "run3":
+            for HNL_mass in [2, 10, 20, 50, 100]: #Don't have 150MeV sample yet
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_ee_"+DetVar]
+    if Params["Load_pi0_signal_DetVars"] == True:
+        if Params["Run"] == "run1": print("There are no pi0 detvar samples for run1.")
+        if Params["Run"] == "run3":
+            for HNL_mass in [150, 180, 220, 240,245]: #200 is broken for some reason
+                for DetVar in Constants.Detector_variations:
+                    samples+=[str(HNL_mass)+"_pi0_"+DetVar]
+                    
+    print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
+    
+    return Params, samples
+
+def create_sample_list(Params): #Returns an extended parameter dict and a the list of samples to run over
+    if Params["FLATTEN"] == True: Params["Flat_state"] = "flattened"
+    else: Params["Flat_state"] = "unflattened"
+    if Params["Only_keep_common_DetVar_evs"] == True: Params["Reduced_state"] = "reduced_evs"
+    else: Params["Reduced_state"] = "all_evs"
+
+    if Params["only_presel"]: #Only loading variables for preselection plots
+        Params["variables_string"] = "Presel_vars"
+        Params["variables"] = Variables.Preselection_vars_CRT + Variables.event_vars
+        Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.event_vars
+    elif Params["Load_truth_vars"]:
+        Params["variables_string"] = "Truth_vars"
+        Params["variables"] = Variables.event_vars + Variables.event_vars
+        Params["variables_MC"] = Variables.event_vars + Variables.event_vars
+    else:
+        Params["variables_string"] = "my_vars" #Standard variables I use
         Params["variables"] = Variables.Final_variable_list
         Params["variables_MC"] = Variables.Final_variable_list_MC
 
@@ -89,11 +151,59 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
                 for DetVar in Constants.Detector_variations:
                     samples+=[str(HNL_mass)+"_"+DetVar]
     if Params["Load_data"] == True: samples.extend(["beamgood"])
+    if Params["Load_lepton_dirac"] == True: samples.extend(["lepton_dirac"])
+    if Params["Load_pi0_dirac"] == True: samples.extend(["pi0_dirac"])
     if Params["Load_single_file"] == True: samples = [Params["single_file"]]
+    
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
     
     return Params, samples
+
+def Get_all_sample_locs(Params):
+    Run = Params["Run"]
+    if Run == "run1": current = "FHC"
+    elif Run == "run3": current = "RHC"
+
+    sample_loc_dict = {"overlay":f'../NuMI_MC/SLIMMED_neutrinoselection_filt_{Run}_overlay.root',
+                       "dirtoverlay":f'../NuMI_MC/neutrinoselection_filt_{Run}_dirt_overlay.root',
+                       "beamoff":f'../NuMI_data/neutrinoselection_filt_{Run}_beamoff.root',
+                       "beamgood":f'../NuMI_data/neutrinoselection_filt_{Run}_beamon_beamgood.root'}
+    
+    signal_start_str = f'../NuMI_signal/KDAR_dump/sfnues/'
+    #Majorana ee
+    for mass in Constants.HNL_mass_samples:
+        sample_loc_dict.update({str(mass)+"_ee":signal_start_str+f'sfnues_KDAR_dump_{mass}_ee_Umu4_majorana_{current}.root'})
+    #Majorana pi0
+    for mass in Constants.HNL_mass_pi0_samples:
+        sample_loc_dict.update({str(mass)+"_pi0":signal_start_str+f'pi0/sfnues_KDAR_dump_{mass}_pi0_Umu4_majorana_{current}.root'})
+    #Dirac ee
+    for mass in Constants.HNL_ee_dirac_mass_samples:
+        sample_loc_dict.update({str(mass)+"_ee_dirac":signal_start_str+f'sfnues_KDAR_dump_{mass}_ee_Umu4_dirac_{current}.root'})
+    #Dirac pi0
+    for mass in Constants.HNL_pi0_dirac_mass_samples:
+        sample_loc_dict.update({str(mass)+"_pi0_dirac":signal_start_str+f'pi0/sfnues_KDAR_dump_{mass}_pi0_Umu4_dirac_{current}.root'})
+    
+    #Overlay DetVars
+    for Var in Constants.Detector_variations:
+        sample_loc_dict.update({Var:f"../NuMI_MC/DetVars/neutrinoselection_filt_{Run}_overlay_{Var}.root"})
+    #Signal DetVars
+    if Run=="run1": 
+        DetVar_ee_masses = Constants.Run1_ee_DetVar_samples
+        DetVar_pi0_masses = Constants.Run1_pi0_DetVar_samples
+    if Run=="run3":
+        DetVar_ee_masses = Constants.Run3_ee_DetVar_samples
+        DetVar_pi0_masses = Constants.Run3_pi0_DetVar_samples
+    #ee DetVars
+    for mass in DetVar_ee_masses:       
+        for DetVar in Constants.Detector_variations:
+            sample_loc_dict.update({str(mass)+"_ee_"+DetVar:f"../NuMI_signal/KDAR_dump/sfnues/DetVars/{mass}_{DetVar}_{Run}.root"})
+    #pi0 DetVars
+    for mass in DetVar_pi0_masses:       
+        for DetVar in Constants.Detector_variations:
+            sample_loc_dict.update({str(mass)+"_pi0_"+DetVar:f"../NuMI_signal/KDAR_dump/sfnues/pi0/DetVars/{mass}_{DetVar}_{Run}.root"})
+        
+    return sample_loc_dict
 
 def Edit_Weight_Tune(df_to_Tune): #This is taken from Aditya's code, Owen also has the same in his for overlay and dirt, there is the same block in PELEE code
     df_to_Tune.loc[ df_to_Tune['weightSplineTimesTune'] <= 0, 'weightSplineTimesTune' ] = 1.
@@ -176,15 +286,121 @@ def make_unique_ev_id(df): #df must have 'run', 'sub' and 'evt' branches
         print("Dataframe needs \"run\", \"sub\" and \"evt\" columns.")
         return 0
     
-def make_common_evs_df(df_list):
+def make_common_evs_df(df_list): #Need to rewrite this so I don't get duplicate columns.
     overlapping_df = functools.reduce(lambda left,right: pd.merge(left, right, on=['rse_id'], how='inner'), df_list)
     print("Length is of common events list is " + str(len(overlapping_df)))
     return overlapping_df
 
-# def make_common_indices_df(df_list):
-#     overlapping_df = functools.reduce(lambda left,right: pd.merge(left, right, on=['rse_id'], how='inner'), df_list)
-#     print("Length is of common events list is " + str(len(overlapping_df)))
-#     return overlapping_df
+
+def get_vars(sample, Params):
+    MC_samples = ["overlay","dirtoverlay"] + Constants.Detector_variations
+    if sample in MC_samples: variables = Params["variables_MC"]
+    else: variables = Params["variables"]
+    
+    return variables
+    
+def Make_new_vars(df, sample, Params):
+    weight_samples = ["overlay","dirtoverlay"] + Constants.Detector_variations 
+    #Making fiducial variables
+    if sample in Constants.Detector_variations and Params["Run"]=="run3":
+        print("skipping fiducal vars, run3 overlay detvar has thetaXZ broken")
+        final_file = df.copy()
+        del(df)
+    elif Params["FLATTEN"] == False:
+        final_file = df.copy()
+        del(df)
+    else:
+        final_file = Make_fiducial_vars(df)
+        del(df)
+    #Making and editing weight, only for MC samples
+    if sample in weight_samples:
+        Edit_Weight_Tune(final_file)
+        MC_weight_branch(final_file)
+    #Making "rse_id" column for all files
+    make_unique_ev_id(final_file)
+    
+    return final_file
+
+def get_pkl_savename(sample, loc_pkls, Params):
+    save_str = loc_pkls
+    Run=Params["Run"]
+    split_end = sample.split("_")[-1]
+    split_start = sample.split("_")[0]
+    if sample in Constants.Detector_variations: save_str += "DetVars/overlay_"
+    if Params["Load_Signal_DetVars"] == True: save_str += "Signal_DetVars/"
+    if Params["Load_pi0_signal_DetVars"] == True: save_str += "Signal_DetVars/pi0/"
+    save_str += f"{sample}_{Run}_"+Params["Flat_state"] 
+    if (sample in Constants.Detector_variations) or (split_end in Constants.Detector_variations): save_str += "_"+Params["Reduced_state"]
+    
+    return save_str
+    
+def make_filtered_events(df, sample, common_evs, Params):
+    if (sample in Constants.Detector_variations) or (Params["Load_Signal_DetVars"] == True) or (Params["Load_pi0_signal_DetVars"] == True):
+        if (common_evs == None) or (len(common_evs)==0): print("No common events loaded!")
+        if Params["Only_keep_common_DetVar_evs"] == True:
+            filtered = df.loc[(df['rse_id'].isin(common_evs['rse_id']))]
+            final_file = filtered.copy()
+            del(df)
+            del(filtered)
+        else: 
+            final_file = df.copy()
+            del(df)
+    else: 
+        final_file = df.copy()
+        del(df)
+        
+    return final_file
+
+def New_load_and_pkl(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
+    for sample in samples:
+        variables = get_vars(sample, Params)
+        root_file = uproot3.open(sample_loc[sample])['nuselection/NeutrinoSelectionFilter']
+        df_file = root_file.pandas.df(variables, flatten=Params["FLATTEN"])
+        new_file = Make_new_vars(df_file, sample, Params) #Edits weight tune, creates weights, event ids and fiducial variables
+        final_file = make_filtered_events(new_file, sample, common_evs, Params) #For getting rid of events which aren't in all Detvar samples     
+
+        print("Pickling "+Params["Run"]+f" overlay {sample} file")
+        filename = get_pkl_savename(sample, loc_pkls, Params)
+        final_file.to_pickle(filename+save_str+".pkl")
+        del(final_file)
+    print("\n"+"Finished all!")
+    
+def Make_common_evs(samples, sample_loc, Params):
+    if Params["Only_keep_common_DetVar_evs"]==False:
+        return None
+    if Params["Load_DetVars"] == True: #ONLY loading overlay DetVars
+        df_rse_list = []
+        for sample in samples:
+            root_file = uproot3.open(sample_loc[sample])['nuselection/NeutrinoSelectionFilter']
+            df_file = root_file.pandas.df(['run','sub','evt'], flatten=False)
+            make_unique_ev_id(df_file)
+            df_rse = df_file[['rse_id']]
+            df_rse_list.append(df_rse)
+
+        common_evs = make_common_evs_df(df_rse_list)
+        return common_evs
+    
+    elif (Params["Load_Signal_DetVars"] == True) or (Params["Load_pi0_signal_DetVars"] == True): #Loading e+e- OR pi0 DetVars
+        masses = []
+        for sample in samples:
+            sample_split = sample.split("_")
+            if len(sample_split) != 3: print("Some samples not signal DetVars")
+            name = sample_split[0] + "_" + sample_split[1]
+            if name not in masses: masses.append(name)
+        print("masses are " + str(masses)) #Only for testing
+        common_evs_dict = {}
+        for mass in masses:
+            df_rse_list = []
+            for DetVar in Constants.Detector_variations:
+                sample = mass+"_"+DetVar
+                root_file = uproot3.open(sample_loc[sample])['nuselection/NeutrinoSelectionFilter']
+                df_file = root_file.pandas.df(['run','sub','evt'], flatten=False)
+                make_unique_ev_id(df_file)
+                df_rse = df_file[['rse_id']]
+                df_rse_list.append(df_rse)
+            common_evs_dict[mass] = make_common_evs_df(df_rse_list)
+        return common_evs_dict
+    else: return None
 
 def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
     for sample in samples: #Looping over all samples, should make a function for this.

@@ -72,6 +72,12 @@ Preselection_dict_crtveto = {"crtveto":"crtveto==0"}
 HNL_mass_samples = [2, 10, 20, 50, 100, 150] #These are the current mass points for decays to e+e-, cautious of 2MeV sample sclaing
 HNL_mass_pi0_samples = [150, 180, 200, 220, 240, 245]
 HNL_mass_pi0_samples_names = ["150_pi0", "180_pi0", "200_pi0", "220_pi0", "240_pi0", "245_pi0"]
+HNL_ee_dirac_mass_samples = [10, 100, 150]
+HNL_pi0_dirac_mass_samples = [150, 200, 245]
+Run1_ee_DetVar_samples = [50, 100, 150]
+Run3_ee_DetVar_samples = [2, 10, 20, 50, 100]
+Run1_pi0_DetVar_samples = []
+Run3_pi0_DetVar_samples = [150, 180, 220, 240,245] #200 is broken for some reason
 
 theta_mu_4 = 1e-4 #This is the same for *most* of the samples and was set in the production .fcls, now made a new dict because some are higher than this
 theta_mu_4_dict = {2:1e-1,
@@ -115,6 +121,12 @@ run1_event_numbers = {2: 36059,
                      "220_pi0": 36868,
                      "240_pi0": 35264,
                      "245_pi0": 36698,
+                     '10_ee_dirac':34373,
+                     '100_ee_dirac':34114,
+                     "150_ee_dirac":31355,
+                     "150_pi0_dirac":35110,
+                     "200_pi0_dirac":33397,
+                     "245_pi0_dirac":34878,
                      "overlay": 914729,
                      "dirtoverlay": 569506,
                      "beamoff": 904362,
@@ -145,19 +157,6 @@ run3_event_numbers = {2: 45159,
 run1_sum_weights = {"overlay": 867669.0,"dirtoverlay": 535760.1}
 run3_sum_weights = {"overlay": 704253.8,"dirtoverlay": 363852.9}
 
-sampling_fix_scalings = {2: 0.0313, #Sceptical of 2MeV POT counting because I used such a large mixing angle. Not sure if correct
-                         10: 0.0987, #This is only here for reference, it is now folded into the new "POT_scaling" dicts 
-                         20: 0.1042,
-                         50: 0.1060, 
-                         100: 0.1043,
-                         150: 0.0452,
-                         "150_pi0": 0.5646,
-                         "180_pi0": 0.8187,
-                         "200_pi0": 0.8541,
-                         "220_pi0": 0.8544,
-                         "240_pi0": 0.8484,
-                         "245_pi0": 0.8583}
-
 run1_POT_scaling_dict = {2: 7.116758217611076e-08, #All ee samples (up to 150MeV) now corrected for sampling fix
                          10: 4.421195517726753e-07,
                          20: 2.6922986790110916e-13,
@@ -175,6 +174,12 @@ run1_POT_scaling_dict = {2: 7.116758217611076e-08, #All ee samples (up to 150MeV
                          "220_pi0": 0.0001701935111423321,
                          "240_pi0": 0.00034948084037732583,
                          "245_pi0": 0.00039327366427535133,
+                         "10_ee_dirac":2.259966244579603e-07,
+                         "100_ee_dirac":4.51710913729398e-09,
+                         "150_ee_dirac":8.919576191863471e-08,
+                         "150_pi0_dirac":1.0222965933561835e-06,
+                         "200_pi0_dirac":4.233726447611382e-05,
+                         "245_pi0_dirac":0.00020749021228398003,
                          "overlay": 0.08559729531465318,
                          "dirtoverlay": 0.08961042442406035,
                          "beamoff": 0.5612087579382191,
@@ -306,6 +311,19 @@ limit_colours = {"PIENU":"C1",
 #----------------------------------------------------------#
 #------OLD constants, for depricated code and samples------#
 #----------------------------------------------------------#
+
+sampling_fix_scalings = {2: 0.0313, #Sceptical of 2MeV POT counting because I used such a large mixing angle. Not sure if correct
+                         10: 0.0987, #This dict is only here for reference, it is now folded into the new "POT_scaling" dicts 
+                         20: 0.1042,
+                         50: 0.1060, 
+                         100: 0.1043,
+                         150: 0.0452,
+                         "150_pi0": 0.5646,
+                         "180_pi0": 0.8187,
+                         "200_pi0": 0.8541,
+                         "220_pi0": 0.8544,
+                         "240_pi0": 0.8484,
+                         "245_pi0": 0.8583}
 
 OLD_HNL_mass_samples = [2, 10, 20, 50, 100, 150, 180, 200, 220, 240, 245]
 
