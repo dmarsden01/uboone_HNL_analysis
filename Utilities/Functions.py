@@ -622,6 +622,13 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
     if Params["Load_pi0_signal"] == True:
         for HNL_mass in Constants.HNL_mass_pi0_samples:
             samples+=[str(HNL_mass)+"_pi0"]
+    if Params["Load_lepton_dirac"] == True:
+        for mass in Constants.HNL_ee_dirac_mass_samples:
+            samples +=[str(mass) + "_ee_dirac"]
+    if Params["Load_pi0_dirac"] == True:
+        for mass in Constants.HNL_pi0_dirac_mass_samples:
+            samples +=[str(mass) + "_pi0_dirac"]
+    
     if Params["Load_DetVars"] == True: #This is overlay DetVars
         samples.extend(Constants.Detector_variations)
     if Params["Load_Signal_DetVars"] == True:
