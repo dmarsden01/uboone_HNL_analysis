@@ -70,10 +70,13 @@ Preselection_dict_crtveto = {"crtveto":"crtveto==0"}
 #------------------------------------#
 
 HNL_mass_samples = [2, 10, 20, 50, 100, 150] #These are the current mass points for decays to e+e-, cautious of 2MeV sample sclaing
+HNL_ee_samples_names = ["2_ee", "10_ee", "20_ee", "50_ee", "100_ee", "150_ee"]
 HNL_mass_pi0_samples = [150, 180, 200, 220, 240, 245]
 HNL_mass_pi0_samples_names = ["150_pi0", "180_pi0", "200_pi0", "220_pi0", "240_pi0", "245_pi0"]
 HNL_ee_dirac_mass_samples = [10, 100, 150]
 HNL_pi0_dirac_mass_samples = [150, 200, 245]
+HNL_ee_dirac_names = ["10_ee_dirac", "100_ee_dirac", "150_ee_dirac"]
+HNL_pi0_dirac_names = ["150_pi0_dirac", "200_pi0_dirac", "245_pi0_dirac"]
 Run1_ee_DetVar_samples = [50, 100, 150]
 Run3_ee_DetVar_samples = [2, 10, 20, 50, 100]
 Run1_pi0_DetVar_samples = []
@@ -110,6 +113,12 @@ run1_event_numbers = {2: 36059,
                      50: 35518, 
                      100: 36881, 
                      150: 35254, #Fixed for new sample
+                     "2_ee": 36059,
+                     "10_ee": 35032,
+                     "20_ee": 36815,
+                     "50_ee": 35518, 
+                     "100_ee": 36881, 
+                     "150_ee": 35254,
                      180: 36670, 
                      200: 35325,
                      220: 36849,
@@ -138,6 +147,12 @@ run3_event_numbers = {2: 45159,
                      50: 44579, 
                      100: 45304, 
                      150: 44031, #Fixed for new sample
+                     "2_ee": 45159,
+                     "10_ee": 44463,
+                     "20_ee": 46022,
+                     "50_ee": 44579, 
+                     "100_ee": 45304, 
+                     "150_ee": 44031,
                      180: 46038, 
                      200: 45003,
                      220: 46093,
@@ -163,6 +178,12 @@ run1_POT_scaling_dict = {2: 7.116758217611076e-08, #All ee samples (up to 150MeV
                          50: 8.776574871312947e-11, 
                          100: 8.380344432250804e-09, 
                          150: 1.594402204319872e-07, #Fixed to be corret scaling with sampling fix 
+                         "2_ee": 7.116758217611076e-08, #All ee samples (up to 150MeV) now corrected for sampling fix
+                         "10_ee": 4.421195517726753e-07,
+                         "20_ee": 2.6922986790110916e-13,
+                         "50_ee": 8.776574871312947e-11, 
+                         "100_ee": 8.380344432250804e-09, 
+                         "150_ee": 1.594402204319872e-07,
                          180: 3.373080077973945e-05, #Wrong, but not using 180-245MeV ee samples anymore
                          200: 9.293586743019126e-05,
                          220: 0.00020120909708414096,
@@ -191,6 +212,12 @@ run3_POT_scaling_dict = {2: 1.4264872844261716e-07, #All ee samples (up to 150Me
                          50: 1.784272446212085e-10, 
                          100: 1.709941880563678e-08, 
                          150: 3.179231163470327e-07, #Fixed to be corret scaling with sampling fix
+                         "2_ee": 1.4264872844261716e-07, #All ee samples (up to 150MeV) now corrected for sampling fix
+                         "10_ee": 8.612201693171446e-07,
+                         "20_ee": 5.457161021952394e-13, 
+                         "50_ee": 1.784272446212085e-10, 
+                         "100_ee": 1.709941880563678e-08, 
+                         "150_ee": 3.179231163470327e-07,
                          180: 6.790004454782067e-05, #Wrong, but not using 180-245MeV ee samples anymore 
                          200: 0.0001841720407411439,
                          220: 0.00040388981532410006,
@@ -295,15 +322,19 @@ variable_names_dict = {'nslice':"Neutrino slice", #Should contain all names for 
                        "min_y": "Minimum extent in y [cm]","max_y": "Maximum extent in y [cm]",
                        "min_z": "Minimum extent in z [cm]","max_z": "Maximum extent in z [cm]"}
 
-limit_locs = {"PIENU":'limit_files/PIENU_2019.csv',
+limit_locs = {"SIN":'limit_files/SIN_BR_ratio.csv',
+              "PIENU":'limit_files/PIENU_2019.csv',
               "PS191":'limit_files/PS191_1988.csv',
-              "KEK":'limit_files/KEK.csv',
+              "KEK":'limit_files/KEK_1984_E89_plus_E104.csv',
+              "KEK_1982":'limit_files/KEK_1982.csv',
               "E949":'limit_files/E949_2015.csv'}
 
-limit_colours = {"PIENU":"C1",
-                "PS191":"C2",
-                "KEK":"C3",
-                "E949":"C4"}
+limit_colours = {"SIN":"C17",
+                 "PIENU":"C1",
+                 "PS191":"C2",
+                 "KEK":"C3", #1984 "combined" limit
+                 "KEK_1982":"C3",
+                 "E949":"C4"}
 
 
 

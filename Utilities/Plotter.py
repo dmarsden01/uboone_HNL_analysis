@@ -701,7 +701,7 @@ def HNL_scaling_calculator(samples=[], sample_norms=[]): #Prints the value which
 
 # def Plot_BDT_input():
 
-def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
+def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
     
     if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
     if(samples==[]): raise Exception("Specify samples")
@@ -715,8 +715,9 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
     elif logy == False:
         logscale="linear"
     
-    for HNL_mass in HNL_masses:
+    for i, HNL_mass in enumerate(HNL_masses):
         plt.figure(figsize=figsize,facecolor='white')
+        signal_name = signal_names[i]
         if logit == False:
             bkg_scores=[samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],
                    samples['beamoff'][f'BDT_output_{HNL_mass}MeV']]
@@ -751,11 +752,11 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
               stacked=True,linewidth=2,edgecolor="black",
               weights=bkg_weights, color=bkg_colors, alpha=ALPHA)
         if logit == False:
-            plt.hist(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[HNL_mass]*HNL_scale,bins=bins,range=xlims,
+            plt.hist(samples[signal_name][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[signal_name]*HNL_scale,bins=bins,range=xlims,
                      lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
         if logit == True:
-            plt.hist(Functions.logit(samples[HNL_mass][f'BDT_output_{HNL_mass}MeV']),
-                     weights=sample_norms[HNL_mass]*HNL_scale,bins=bins,range=xlims,
+            plt.hist(Functions.logit(samples[signal_name][f'BDT_output_{HNL_mass}MeV']),
+                     weights=sample_norms[signal_name]*HNL_scale,bins=bins,range=xlims,
                      lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
         plt.legend(loc=legloc,frameon=True)
         
@@ -765,8 +766,8 @@ def Plot_BDT_output(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPH
         plt.rcParams.update({'font.size': 30})
         plt.yscale(logscale)
         if savefig == True:
-            plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(HNL_mass) + "MeV_" + logscale + save_str + ".pdf")
-            plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(HNL_mass) + "MeV_" + logscale + save_str + ".png")
+            plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(signal_name) + "MeV_" + logscale + save_str + ".pdf")
+            plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(signal_name) + "MeV_" + logscale + save_str + ".png")
         plt.show()
         
 def Plot_BDT_output_data(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0, dpi=100):
