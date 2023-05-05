@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import awkward as awk
-import matplotlib as mpl
 import numpy as np
 import math
 import pandas as pd

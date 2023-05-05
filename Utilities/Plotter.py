@@ -1,10 +1,6 @@
 import matplotlib.pyplot as plt
-import awkward as awk
-import matplotlib as mpl
 import numpy as np
 import math
-# import Utilities.SystematicsCalc as SC
-# import Utilities.Consts as C
 
 import Utilities.Constants as Constants
 import Utilities.Functions as Functions
