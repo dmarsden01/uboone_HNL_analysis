@@ -1039,6 +1039,39 @@ def Uncertainty_breakdown(Params, hist_dict, bkg_reweight_err_dict=None, bkg_det
         print(sig_err)
     return BKG_ERR_dict, SIGNAL_ERR_dict
 
+def make_overflow_bin(bins_dict, bins_cents_dict):
+    """
+    For making the final "overflow" bin the same size as the previous bins, i.e one integer in width.
+    """
+    bins_overflow, bins_cent_overflow = {}, {}
+    for HNL_mass in bins_dict:
+        overflow_bin = bins_cents_dict[HNL_mass][-2]+1 #Just adding one to the penultimate bin centre val. 
+        bins_cent_overflow[HNL_mass] = bins_cents_dict[HNL_mass].copy()
+        bins_cent_overflow[HNL_mass][-1] = overflow_bin
+        bins_overflow[HNL_mass] = bins_dict[HNL_mass].copy()
+        bins_overflow[HNL_mass][-1] = bins_dict[HNL_mass][-2]+1 #Just adding one to the penultimate bin end val. 
+    return bins_overflow, bins_cent_overflow
+
+def make_xlims_dict(bins_dict, lower = None):
+    """
+    Making a dict of xlims for plotting several mass points at once.
+    Also returns a dict of xticks for the purpose of indicating the overflow.
+    """
+    xlims_adjusted, xticks_adjusted = {}, {}
+    for HNL_mass in bins_dict:
+        if isinstance(lower,(int, float)): lower_val = lower
+        else: lower_val = bins_dict[HNL_mass][0]
+        xlims_adjusted[HNL_mass] = [lower_val,bins_dict[HNL_mass][-1]]
+        ticks = np.arange(bins_dict[HNL_mass][0], bins_dict[HNL_mass][-1], 1)
+        ticks_strings = []
+        for val in ticks:
+            ticks_strings.append(str(int(val)))
+        ticks_strings[-1] = str(ticks_strings[-1])+"+"
+        xticks_adjusted[HNL_mass] = ticks_strings
+        
+    return xlims_adjusted, xticks_adjusted
+
+
 def Calculate_total_uncertainty_OLD(Params, hist_dict, bkg_reweight_err_dict=None, bkg_detvar_dict=None, sig_detvar_dict=None): #Takes the dictionary of all root files
     BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
     for HNL_mass in Constants.HNL_mass_samples:
