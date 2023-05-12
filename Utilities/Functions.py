@@ -23,6 +23,20 @@ def Shannon_entropy_M(Total_entries, Max_entries_in_bin):
     M = np.log2(Total_entries)/(np.log2(Total_entries/Max_entries_in_bin)+1)
     return M
 
+def Get_chi_squared(Obs_hist, Exp_hist, errors_hist):
+    """
+    Returns the chi squared value for an input observed, expected and error on expected hist. 
+    """
+    if len(Obs_hist) != len(Exp_hist) or len(Obs_hist)!= len( errors_hist):
+        print("Histograms of different lenghts! Exiting.")
+        return 0
+    Total = 0.0
+    for i, obs in enumerate(Obs_hist):
+        if Exp_hist[i]==0: continue
+        calc = (Obs_hist[i]-Exp_hist[i])**2/errors_hist[i]**2
+        Total += calc
+    return Total
+
 def Get_resolution(axis, Num_pixels):
     """
     Given the number of pixels in one dimension, returns the number which should be in the other,
@@ -1153,20 +1167,12 @@ def remove_part_hist(hist_list, numbins):
         slice_at = length - int(numbins)
         if slice_at < 0:
             print("Trying to use greater number of bins than available, using full dist.")
-            slice_at = 0
-        sliced_hist = hist_list[slice_at:]
-        return sliced_hist
+            return hist_list
+        else:
+            sliced_hist = hist_list[slice_at:]
+            return sliced_hist
 
 def Make_into_lists(Params, BKG_dict, SIGNAL_dict, TOT_ERR_dict):
-    
-    def remove_part_hist(hist_list, numbins):
-        length = len(hist_list)
-        slice_at = length - int(numbins)
-        if slice_at < 0:
-            print("Trying to use greater number of bins than available, using full dist.")
-            slice_at = 0
-        sliced_hist = hist_list[slice_at:]
-        return sliced_hist
     
     BKG_dict_FINAL, SIGNAL_dict_FINAL= {}, {}
     ERR_dict_FINAL = {}

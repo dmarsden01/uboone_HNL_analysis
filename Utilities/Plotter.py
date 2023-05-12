@@ -137,7 +137,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
 def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, 
-                                    discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False):
+                                    discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, chi_squared=False, dirt_frac_error=1.0):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -224,7 +224,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         total_frac_sys = np.sqrt(frac_total) #Quadrature sum of the genie and ppfx fractional errors
         total_sys_err = frac_total*overlaybkg_weighted #Genie and ppfx uncertainty on the overlay
         
-        dirt_norm_err_fac = 1.0 #100% dirt normalization uncertainty
+        dirt_norm_err_fac = dirt_frac_error #100% dirt normalization uncertainty from Krish "conservative"
         dirt_norm_err=dirtbkg_weighted*dirt_norm_err_fac
         tot_mcerr=np.sqrt( stat_bkgerr**2+total_sys_err**2+dirt_norm_err**2)
         if(err_print):
@@ -332,7 +332,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         for line in cutline:
             plt.axvline(x=line, lw=3, color='green', linestyle = 'dashed')
         # plt.axvline(x=cutline, lw=3, color='green', linestyle = 'dashed')
-    if arrow_place != []: #No idea how to fix this.
+    if arrow_place != []:
         # plt.arrow(arrow_place[0], arrow_place[1], arrow_place[2], arrow_place[3], color='green', shape='full',fill=False, 
         #           length_includes_head=True, overhang=0.0, head_width=-0.1, head_length=0.15, lw=3)
         if isinstance(arrow_place[0],list):
@@ -348,7 +348,15 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     else:
         plt.yscale("linear")
         
-        
+    if chi_squared==True:
+        Exp_hist = offbkg_weighted+overlaybkg_weighted+dirtbkg_weighted
+        Obs_hist = dat_val
+        chi_square_val = Functions.Get_chi_squared(Obs_hist, Exp_hist, tot_mcerr)
+        reduced_chi_squared = chi_square_val/(len(Obs_hist)) # degrees of freedom is no. of bins here
+        print("d.o.f is " + str(len(Obs_hist)))
+        print("Chi squared is " + str(chi_square_val))
+        print("Reduced Chi squared is " + str(reduced_chi_squared))
+            
     plt.ylabel(ylabel)
     plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize})
     
@@ -408,7 +416,7 @@ def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weight
                             dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False,
                             cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False,
                             hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False,
-                            savename="test", HNL_scale_label=False, title_name = ""):
+                            savename="test", HNL_scale_label=False, title_name = "", chi_squared=True, dirt_frac_error=1.0):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -465,9 +473,12 @@ def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weight
     dirtbkg=np.histogram(var_Dirt,bins=bins,range=xlims)[0]
     
     #weighted hists
-    offbkg_weighted=np.histogram(var_Offbeam,bins=bins,range=xlims,weights=weight_Offbeam)[0]
-    overlaybkg_weighted=np.histogram(var_Overlay,bins=bins,range=xlims,weights=weight_Overlay)[0]
-    dirtbkg_weighted=np.histogram(var_Dirt,bins=bins,range=xlims,weights=weight_Dirt)[0]
+    # offbkg_weighted=np.histogram(var_Offbeam,bins=bins,range=xlims,weights=weight_Offbeam)[0] #These are wrong, not new weights
+    # overlaybkg_weighted=np.histogram(var_Overlay,bins=bins,range=xlims,weights=weight_Overlay)[0]
+    # dirtbkg_weighted=np.histogram(var_Dirt,bins=bins,range=xlims,weights=weight_Dirt)[0]
+    offbkg_weighted=np.histogram(var_Offbeam,bins=bins,range=xlims,weights=weights_sample['beamoff'])[0]
+    overlaybkg_weighted=np.histogram(var_Overlay,bins=bins,range=xlims,weights=weights_sample['overlay'])[0]
+    dirtbkg_weighted=np.histogram(var_Dirt,bins=bins,range=xlims,weights=weights_sample['dirtoverlay'])[0]
            
     #Testing Owens way, Err = sqrt(N*S.F**2)
     mc_w=np.histogram(var_Overlay,bins=bins,range=xlims,weights=weight_Overlay**2)
@@ -490,7 +501,7 @@ def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weight
         total_frac_sys = np.sqrt(frac_total)
         total_sys_err = frac_total*overlaybkg_weighted
         
-        dirt_norm_err_fac = 1.0
+        dirt_norm_err_fac = dirt_frac_error
         dirt_norm_err=dirtbkg_weighted*dirt_norm_err_fac
         tot_mcerr=np.sqrt( stat_bkgerr**2+total_sys_err**2+dirt_norm_err**2)
     
@@ -610,6 +621,15 @@ def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weight
         
     plt.ylabel(ylabel)
     plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize})
+    
+    if chi_squared==True:
+        Exp_hist = offbkg_weighted+overlaybkg_weighted+dirtbkg_weighted
+        Obs_hist = dat_val
+        chi_square_val = Functions.Get_chi_squared(Obs_hist, Exp_hist, tot_mcerr)
+        reduced_chi_squared = chi_square_val/(len(Obs_hist)) # degrees of freedom is no. of bins here
+        print("d.o.f is " + str(len(Obs_hist)))
+        print("Chi squared is " + str(chi_square_val))
+        print("Reduced Chi squared is " + str(reduced_chi_squared))
     
     # plt.xlabel(xlabel)
     plt.xlim(xlims)
