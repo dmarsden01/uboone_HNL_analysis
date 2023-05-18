@@ -348,9 +348,17 @@ def get_pkl_savename(sample, loc_pkls, Params):
     
 def make_filtered_events(df, sample, common_evs, Params):
     if (sample in Constants.Detector_variations) or (Params["Load_Signal_DetVars"] == True) or (Params["Load_pi0_signal_DetVars"] == True):
-        if (common_evs == None) or (len(common_evs)==0): print("No common events loaded!")
+        # if (common_evs == None) or (len(common_evs)==0): print("No common events loaded!")
+        if len(common_evs)==0: print("No common events loaded!")
+        if isinstance(common_evs, dict): 
+            sample_str = sample.split('_')[0]
+            sample_str += "_"
+            sample_str += sample.split('_')[1]
+            common_evs_list = common_evs[sample_str]
+        else: common_evs_list = common_evs
+        
         if Params["Only_keep_common_DetVar_evs"] == True:
-            filtered = df.loc[(df['rse_id'].isin(common_evs['rse_id']))]
+            filtered = df.loc[(df['rse_id'].isin(common_evs_list['rse_id']))]
             final_file = filtered.copy()
             del(df)
             del(filtered)
