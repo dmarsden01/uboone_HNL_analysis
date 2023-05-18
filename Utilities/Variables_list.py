@@ -59,9 +59,11 @@ Final_features = ['shr_theta_v', 'shr_phi_v', 'shr_px_v', 'shr_py_v', 'shr_pz_v'
                   'pfnplanehits_U', 'pfnplanehits_V', 'pfnplanehits_Y', 'NeutrinoEnergy2','SliceCaloEnergy2', 'nu_flashmatch_score', 'contained_sps_ratio', #energy/misc
                   'flash_time', 'contained_fraction', 'trk_score', 'crtveto'] #rest for preselection
 
+other_potential_vars = ['shr_tkfit_dedx_U', 'shr_tkfit_dedx_V', 'shr_tkfit_dedx_Y', 'shr_tkfit_dedx_max', 'shr_tkfit_2cm_dedx_Y',
+                        'shr_chipr', 'trk_bragg_p', 'trk_bragg_p_v', 'trk_chipr', 'subcluster', 'shr_moliere_avg_v', 'shrmoliereavg'] #can't find 'shr_trk_len' in NTuple
 
 #-------------FINAL VARIABLES------------------------#
-Final_variable_list = event_vars + multiplicity_vars + swtrig_vars + Fiducial_variables + Final_features
+Final_variable_list = event_vars + multiplicity_vars + swtrig_vars + Fiducial_variables + Final_features + other_potential_vars
 Final_variable_list_MC = Final_variable_list + weight_related
 
 #Variables used in Pre-selection

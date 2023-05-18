@@ -316,7 +316,7 @@ variable_names_dict = {'nslice':"Neutrino slice", #Should contain all names for 
                        'SliceCaloEnergy2':"Calorimatric energy in slice [MeV]",
                        'shr_energy_tot':"Total shower energy [GeV]",
                        'trk_chipr_best':'Proton chi score',
-                       'trk_calo_energy_u_v':'Track energies U plane',
+                       'trk_calo_energy_u_v':'Track energies U plane [MeV]',
                        "Fiducial_cut": "Fiducial volume",
                        "min_x": "Minimum extent in x [cm]","max_x": "Maximum extent in x [cm]",
                        "min_y": "Minimum extent in y [cm]","max_y": "Maximum extent in y [cm]",
