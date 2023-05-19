@@ -638,24 +638,30 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
     if Params["Load_standard"] == True:
         samples.extend(["overlay","dirtoverlay","beamoff"])
     if Params["Load_lepton_signal"] == True:
-        samples.extend(Constants.HNL_mass_samples)
+        samples.extend(Constants.HNL_ee_samples_names)
     if Params["Load_pi0_signal"] == True:
-        for HNL_mass in Constants.HNL_mass_pi0_samples:
-            samples+=[str(HNL_mass)+"_pi0"]
-    if Params["Load_lepton_dirac"] == True:
-        for mass in Constants.HNL_ee_dirac_mass_samples:
-            samples +=[str(mass) + "_ee_dirac"]
-    if Params["Load_pi0_dirac"] == True:
-        for mass in Constants.HNL_pi0_dirac_mass_samples:
-            samples +=[str(mass) + "_pi0_dirac"]
+        samples.extend(Constants.HNL_mass_pi0_samples_names)
+        # for HNL_mass in Constants.HNL_mass_pi0_samples_names:
+            # samples+=[str(HNL_mass)+"_pi0"]
+    if Params["Load_lepton_dirac"] == True: samples.extend(Constants.HNL_ee_dirac_mass_samples)
+    if Params["Load_pi0_dirac"] == True: samples.extend(Constants.HNL_pi0_dirac_names)
     
     if Params["Load_DetVars"] == True: #This is overlay DetVars
         samples.extend(Constants.Detector_variations)
     if Params["Load_Signal_DetVars"] == True:
         # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
-        for HNL_mass in [50, 100, 150, 180, 200]:
+        if Params["Run"] == "run1": masses = Constants.Run1_ee_DetVar_samples
+        if Params["Run"] == "run3": masses = Constants.Run3_ee_DetVar_samples
+        for HNL_mass in masses: #[50, 100, 150, 180, 200] #Now use names
             for DetVar in Constants.Detector_variations:
                 samples+=[str(HNL_mass)+"_"+DetVar]
+    if Params['Load_pi0_signal_DetVars'] == True:
+        if Params["Run"] == "run1": masses = Constants.Run1_pi0_DetVar_samples
+        if Params["Run"] == "run3": masses = Constants.Run3_pi0_DetVar_samples
+        for HNL_mass in masses: #[50, 100, 150, 180, 200] #Now use names
+            for DetVar in Constants.Detector_variations:
+                samples+=[str(HNL_mass)+"_"+DetVar]
+                
     if Params["Load_data"] == True:
         samples.extend(["beamgood"])
         
