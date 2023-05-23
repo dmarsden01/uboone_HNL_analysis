@@ -681,12 +681,12 @@ def create_sig_detsys_samples_list(Params): #Returns the list of samples to run 
             for HNL_mass in [150]: #While I only have 150MeV sample
                 masses+=[HNL_mass]
                 for DetVar in Constants.Detector_variations:
-                    samples+=[str(HNL_mass)+"_"+DetVar]
+                    samples+=[str(HNL_mass)+"_ee_"+DetVar]
         if Params["Run"] == "run3":
             for HNL_mass in [2, 10, 20, 50, 100]: #Don't have 150MeV sample yet
                 masses+=[HNL_mass]
                 for DetVar in Constants.Detector_variations:
-                    samples+=[str(HNL_mass)+"_"+DetVar]
+                    samples+=[str(HNL_mass)+"_ee_"+DetVar]
     if Params["Load_pi0_signal"] == True:
         if Params["Run"] == "run1":
             print("There are no run1 pi0 detector variation samples")
@@ -694,7 +694,7 @@ def create_sig_detsys_samples_list(Params): #Returns the list of samples to run 
             for HNL_mass in [150,180,220,240,245]: #200 broken for some reason
                 masses+=[HNL_mass]
                 for DetVar in Constants.Detector_variations:
-                    samples+=[str(HNL_mass)+"_"+DetVar]
+                    samples+=[str(HNL_mass)+"_pi0_"+DetVar]
         
     print(f"Loading these "+Params["Run"]+" samples: " + "\n")
     print(samples)
@@ -821,6 +821,22 @@ def make_stat_err(var, bins, weights_times_SF):
     Total_SF = hist_weighted/hist_unweighted
     stat_err=np.sqrt(hist_unweighted)*Total_SF
     return stat_err
+
+def Get_signal_name_type(Params):
+    """
+    Given script parameters will returen "ee", "pi0", "ee_dirac" or "pi0_dirac".
+    """
+    if Params["Load_lepton_signal"] == True:
+        return "ee"
+    elif Params["Load_pi0_signal"] == True: 
+        return "pi0"
+    elif Params["Load_lepton_dirac"] == True: 
+        return "ee_dirac"
+    elif Params["Load_pi0_dirac"] == True: 
+        return "pi0_dirac"
+    else:
+        print("Sample types not recognised, returning 1.")
+        return 1
     
 #Limit setting functions    
 def pyhf_params(Params):
@@ -836,7 +852,8 @@ def pyhf_params(Params):
         total_sig_err = np.sqrt(perc_signal_KDAR**2 + perc_signal_detvar**2)
         print("With " + str(total_sig_err*100) + "% on all signal")
     else: 
-        print("Using fully evaluated systematic uncertainty for background. Dirt will still be 100%.")
+        perc_dirt = Params["Flat_bkg_dirt_frac"]*100
+        print(f"Using fully evaluated systematic uncertainty for background. Dirt error is {perc_dirt}%.")
         perc_flux = Params["Signal_flux_error"]*100
         print(f"Using fully evaluated systematic uncertainty for signal. Using {perc_flux}% flux error.")
 
@@ -1285,6 +1302,59 @@ def Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_masse
             if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass] 
             else:
                 hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}MeV_' + filenames)
+            theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0]
+
+    #list_of_dicts = [hist_dict_run1, hist_dict_run3] #Add runs 2, 4 when available, not using yet
+
+    theta_squared = Constants.theta_mu_4*Constants.theta_mu_4
+
+    all_hists_list = ['bkg_overlay;1', 'bkg_dirt;1', 'bkg_EXT;1', 'signal;1', 'data;1', 'theta;1', 
+                      'ppfx_uncertainty;1', 'Genie_uncertainty;1', 'Reinteraction_uncertainty;1', 
+                      'ppfx_uncertainty_frac;1', 'Genie_uncertainty_frac;1', 'Reinteraction_uncertainty_frac;1', 
+                      'overlay_DetVar_uncertainty;1', 'overlay_DetVar_uncertainty_frac;1', 'signal_DetVar_uncertainty;1', 'signal_DetVar_uncertainty_frac;1']
+    missing_hists = []
+    for hist_name in all_hists_list:
+        if hist_name not in hist_dict_run1[HNL_mass].keys(): missing_hists.append(hist_name)
+    if len(missing_hists) == 0: print("No missing histograms in Run1")
+    else:
+        print("Missing hists for Run1 are: ")
+        print(missing_hists)
+    print("thetas are:")
+    print(theta_dict)
+    print("Done")
+    
+    return hist_dict_run1, hist_dict_run3, theta_dict
+
+def New_Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_masses=Constants.HNL_mass_samples):
+    loc_hists = location
+
+    hist_dict_run1, hist_dict_run3, theta_dict = {}, {}, {}
+
+    #Loading in the .root files
+    if Params_pyhf["Load_lepton_hists"] == True:
+        for HNL_mass in HNL_masses:
+            hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'run1_{HNL_mass}_' + filenames)
+            if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass] 
+            else:
+                hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}_' + filenames)
+            theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0] #assuming scaled theta is the same for all runs, only 1 value saved
+
+    elif Params_pyhf["Load_pi0_hists"] == True:
+        pi0_dict_run1, pi0_dict_run3 = {}, {}
+        for HNL_mass in Constants.HNL_mass_pi0_samples:
+            hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'pi0/run1_{HNL_mass}_' + filenames)
+            if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass]
+            else:
+                hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'pi0/run3_{HNL_mass}_' + filenames)
+            theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0]
+            
+    else:
+        print("Loading Dirac samples")
+        for HNL_mass in HNL_masses:
+            hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'run1_{HNL_mass}_' + filenames)
+            if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass] 
+            else:
+                hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}_' + filenames)
             theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0]
 
     #list_of_dicts = [hist_dict_run1, hist_dict_run3] #Add runs 2, 4 when available, not using yet
