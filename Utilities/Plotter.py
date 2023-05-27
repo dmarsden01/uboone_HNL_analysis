@@ -713,6 +713,44 @@ def HNL_scaling_calculator(samples=[], sample_norms=[]): #Prints the value which
     print("The ratio of all bkgs to HNL events is " + "%.0f" % ratio_all_bkg_HNL + "\n")
     
 
+def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Preselection_signal_min, Preselection_signal_max, log=True):
+    """
+    Input Params, efficiency dict and signal efficiency band dicts.
+    Plots and, if savefig==True, will save the efficiency plot.
+    """
+    var_names = []
+    for var in Preselection_dict.keys():
+        var_names.append(Constants.presel_var_names[var])
+    
+    plt.figure(figsize=[10,10])
+    plotting_effic_dict = {'overlay':Efficiency_dict['overlay'], 'dirtoverlay':Efficiency_dict['dirtoverlay'],
+                          'beamoff':Efficiency_dict['beamoff']}
+    label_effic_dict = {'overlay':fr"In-Cryo $\nu$", 'dirtoverlay':fr"Out-Cryo $\nu$",
+                          'beamoff':f"Beam-Off"}
+    plotting_effic_colours = Constants.sample_colours
+    
+    if log == True: logscale="log"
+    elif log == False: logscale="linear"
+    
+    for effic in plotting_effic_dict:
+        plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Efficiency_dict[effic],label=label_effic_dict[effic],color=plotting_effic_colours[effic],lw=4,markersize=15)
+
+    plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Preselection_signal_max,color="darkred",lw=4,marker="")
+    plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Preselection_signal_min,color="darkred",lw=4,marker="")
+    plt.fill_between(np.array(range(1, len(Efficiency_dict[effic])+1)),Preselection_signal_min,Preselection_signal_max,label="HNL (Range)",color="red")
+    plt.ylabel("Fraction Selected")
+    plt.xticks(np.array(range(1, len(Efficiency_dict['overlay'])+1)),["Full sample"]+var_names,rotation=80)
+    plt.yscale(logscale)
+    plt.legend(loc='lower left',prop={'size': 22})
+
+    plt.tight_layout()
+    
+    save_fig = input("Do you want to save the figure? y/n ")
+    if Params["FLATTEN"] == False: weighted_name = "_non_weighted_FINAL"
+    if Params["FLATTEN"] == True: weighted_name = "_weighted_BOTH_FINAL"
+    if save_fig == 'y':
+        plt.savefig("plots/Preselection_efficiencies/Preselection_efficiency_"+Params["Run"]+ f"_{logscale}{weighted_name}.png")
+        plt.savefig("plots/Preselection_efficiencies/Preselection_efficiency_"+Params["Run"]+ f"_{logscale}{weighted_name}.pdf")
 # def Presel_efficiency():
 
 # def Plot_BDT_input():

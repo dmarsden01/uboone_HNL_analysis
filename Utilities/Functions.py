@@ -575,60 +575,302 @@ def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save
                 final_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
                 del(final_file)
 
+#-----Loading pkls------#
+def Load_initial_pkls(samples, Params, loc_pkls, filename):
+    """
+    For loading initial pkl files. 
+    """
+    sample_dict = {}
+
+    reduced_str = "_"+Params["Reduced_state"]
+    if Params["Load_DetVars"] == True: loc_pkls += "DetVars/overlay_"
+    elif Params["Load_Signal_DetVars"] == True: loc_pkls += "Signal_DetVars/"
+    elif Params['Load_pi0_signal_DetVars'] == True: loc_pkls += "Signal_DetVars/pi0/"
+    else: reduced_str = "" #No reduced string for non-DetVar samples
+    
+    Run, flat = Params["Run"], Params["Flat_state"]
+    
+    for sample in samples:
+        sample_dict[sample] = pd.read_pickle(loc_pkls+f"{sample}_{Run}_{flat}{reduced_str}{filename}.pkl")
+    
+    return sample_dict
+                
 #POT counting
 def POT_counter(file): #Takes uproot file
     Total_POT = file["pot"].array().sum()
     return Total_POT
 
-#Preselection
-def Preselection_weighted_efficiency(samples, cut_dict, Efficiency_dict, Preselected): #Need to account for weigthing in overlay and dirt samples
+
+#------------------------#
+#------Preselection------#
+#------------------------#
+
+def make_unique_events_df(df):
+    """
+    Input dataframe. Return copy of dataframe with no duplicate events.
+    """
+    placeholder=df.drop_duplicates(subset=["run","evt","sub"]).copy()
+    return placeholder
+
+def count_unique_events(df):
+    """
+    Input dataframe. Return number of unique events in that dataframe.
+    """
+    placeholder=df.drop_duplicates(subset=["run","evt","sub"]).copy()
+    unique_evs = len(placeholder)
+    del placeholder
+    return unique_evs
+
+def Preselection_weighted_efficiency(samples, cut_dict): #Need to account for weigthing in overlay and dirt samples
+    """
+    Input dict of unflattened dataframes.
+    Returns the dict of efficiencies and pre-selected samples.
+    """
+    
+    Efficiency_dict, Preselected = {}, {}
     for sample in samples:
-        if sample == "overlay" or sample == "dirtoverlay":
+        if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
             weight = samples[sample]["weight"]
             NumEvs = sum(weight)
         else:
-            NumEvs = len(samples[sample])
+            NumEvs = len(samples[sample]) #Signal, beamoff and beamon don't have weights.
         
         effic_list = [1.0]
+        Preselected[sample]=samples[sample].copy()
         for cut in cut_dict.keys():
-            samples[sample]=samples[sample].query(cut_dict[cut])
-            if sample == "overlay" or sample == "dirtoverlay":
-                weight = samples[sample]["weight"]
+            # samples[sample]=samples[sample].query(cut_dict[cut])
+            Preselected[sample]=Preselected[sample].query(cut_dict[cut])
+            if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+                weight = Preselected[sample]["weight"]
                 Num_selected = sum(weight)
             else:
-                Num_selected = len(samples[sample])
+                Num_selected = len(Preselected[sample])
             effic_list.append(Num_selected/NumEvs)
         Efficiency_dict[sample]=effic_list
-        #samples.update()
-        Selected = samples[sample].copy()
-        placeholder_dict = {sample:Selected}
-        Preselected.update(placeholder_dict) 
+        
+    return Efficiency_dict, Preselected
+        
+def Flattened_Preselection_weighted_efficiency(samples, cut_dict, Run): #Need to account for weigthing in overlay and dirt samples
+    """
+    Input dict of flattened dataframes, dict of cuts and Run.
+    Returns the dict of efficiencies and pre-selected samples.
+    """
+    
+    Efficiency_dict, Preselected = {}, {}
+    for sample in samples:
+        if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+            if Run == "run1":NumEvs = Constants.run1_sum_weights[sample] #This is the total BEFORE any preselection
+            if Run == "run3":NumEvs = Constants.run3_sum_weights[sample]
+        else:
+            if Run == "run1":NumEvs = Constants.run1_event_numbers[sample]
+            if Run == "run3":NumEvs = Constants.run3_event_numbers[sample]
+        
+        effic_list = [1.0]
+        Preselected[sample]=samples[sample].copy()
+        for cut in cut_dict.keys():
+            Preselected[sample]=Preselected[sample].query(cut_dict[cut])
+            if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+                unique_placeholder = make_unique_events_df(Preselected[sample])
+                weight = unique_placeholder["weight"]
+                Num_selected = sum(weight)
+            else:
+                unique_placeholder = make_unique_events_df(Preselected[sample])
+                Num_selected = len(unique_placeholder)
+            effic_list.append(Num_selected/NumEvs)
+        Efficiency_dict[sample]=effic_list
+        
+    return Efficiency_dict, Preselected
+    
+def Preselection_DetVars(samples, cut_dict): #Not making efficiency plots for DetVars
+    """
+    Input dict of flattened dataframes and dict of cuts.
+    Returns dict of the pre-selected samples.
+    """
+    Preselected = {}
+    Preselected[sample]=samples[sample].copy()
+    for sample in samples:
+        for cut in cut_dict.keys():
+            Preselected[sample]=Preselected[sample].query(cut_dict[cut])
+    
+    return Preselected
 
-#Doing BDT training
-def Prepare_dfs_for_xgb(df): #The default value for missing data in XGB is 0. So this changes those very large negative values to -9999.
-    value = -1e15
-    new_value = -9999
-    first_entry = df.index[0]
-    for variable in df.keys():
-        if isinstance(df[variable][first_entry], (int,float,np.int32,np.float32,np.uint32)):
-        # if variable=='rse_id': #Should come up with a better way of checking the "type" of variable, in case it is not int or float.
-        #     continue           #But don't know how to access the first extant row of a dataframe (since some have been removed). 
-        # else: 
-            if(len(df.loc[df[variable] < value]) > 0):
-                df.loc[(df[variable] < value), variable] = new_value #Sets the new value
-            if(len(df.loc[df[variable] == -1.0]) > 0):
-                df.loc[(df[variable] == -1.0), variable] = new_value #Sets the new value
-            if(len(df.loc[df[variable] == np.nan]) > 0):
-                df.loc[(df[variable] == np.nan), variable] = new_value #Sets the new value
-            if(len(df.loc[df[variable] == np.inf]) > 0):
-                df.loc[(df[variable] == np.inf), variable] = new_value #Sets the new value
-        # else:
-        #     print(variable)
-            
-    df_edited = df.copy() 
-    return df_edited
 
-def only_keep_highest_E(df):
+def Get_signal_efficiency_range(Params, Preselection_dict, Efficiency_dict):
+    """
+    Input the Params and pre-selection efficiency dict.
+    Returns the max and min signal efficiency dicts with values for each mass point.
+    """
+    Preselection_signal_min, Preselection_signal_max = [], []
+    min_presel_effic, max_presel_effic = 1.0, 0.0
+    
+    if Params["Load_lepton_signal"] == True: HNL_masses = Constants.HNL_ee_samples_names
+    if Params["Load_pi0_signal"] == True: HNL_masses = Constants.HNL_mass_pi0_samples_names
+    if (Params["Load_pi0_signal"] == True) and (Params["Load_lepton_signal"] == True): 
+        HNL_masses = Constants.HNL_ee_samples_names+Constants.HNL_mass_pi0_samples_names
+
+    if Params["Load_lepton_dirac"] == True: HNL_masses = Constants.HNL_ee_dirac_names
+    if Params["Load_pi0_dirac"] == True: HNL_masses = Constants.HNL_pi0_dirac_names
+
+    for i in range(len(Preselection_dict)+1):
+        for HNL_mass in HNL_masses: 
+            if Efficiency_dict[HNL_mass][i] > max_presel_effic:
+                max_presel_effic = Efficiency_dict[HNL_mass][i]
+            if Efficiency_dict[HNL_mass][i] < min_presel_effic:
+                min_presel_effic = Efficiency_dict[HNL_mass][i]
+        Preselection_signal_max.append(max_presel_effic)
+        Preselection_signal_min.append(min_presel_effic)
+        max_presel_effic = 0.0
+        
+    return Preselection_signal_min, Preselection_signal_max
+
+
+def Get_ev_nums_weights_POT(Run):
+    """
+    Input the Run "run1" or "run3".
+    Returns the total event numbers, sum of event weights and POT normalisation dicts.
+    """
+    if (Run != "run1") and (Run != "run3"):
+        print("Need to select \"run1\" or \"run3\"")
+        return 0
+    if Run == "run1":
+        return Constants.run1_event_numbers, Constants.run1_sum_weights, Constants.run1_POT_scaling_dict
+    if Run == "run3":
+        return Constants.run3_event_numbers, Constants.run3_sum_weights, Constants.run3_POT_scaling_dict
+
+
+def Print_efficiency_numbers(Params, Preselected_dict, Efficiency_dict):
+    """
+    Input the Params and efficiency dict.
+    Prints the efficiency and event numbers for putting into a table.
+    """
+    print(Params["Run"])
+    for sample in Efficiency_dict:
+        print(f"{sample} efficiency is " + str(Efficiency_dict[sample][-1]*100) + "%")
+    
+    ev_numbers, ev_sum_weights, POT_norm = Get_ev_nums_weights_POT(Params["Run"])
+    
+    Num_selected_dict = {}
+    for sample in Preselected_dict:
+        if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+            unique_placeholder = make_unique_events_df(Preselected_dict[sample])
+            weight = unique_placeholder["weight"]
+            Num_selected = sum(weight)*POT_norm[sample]
+            Num_selected_dict[sample]=Num_selected
+        else:
+            unique_placeholder = make_unique_events_df(Preselected_dict[sample])
+            Num_selected = len(unique_placeholder)*POT_norm[sample]
+            Num_selected_dict[sample]=Num_selected
+        print(f"{sample} " + str(Num_selected))
+        
+    selected_bkg_sum = Num_selected_dict["overlay"]+Num_selected_dict["dirtoverlay"]+Num_selected_dict["beamoff"]
+    initial_bkg_sum  = ev_sum_weights["overlay"]*POT_norm["overlay"]+ev_sum_weights["dirtoverlay"]*POT_norm["dirtoverlay"]+ev_numbers["beamoff"]*POT_norm["beamoff"]
+    print("Sum of bkgs: " + str(selected_bkg_sum))
+    print("Sum of bkgs effic: " + str((selected_bkg_sum/initial_bkg_sum)*100) + "%")
+
+    if "beamgood" in Num_selected_dict.keys():
+        print("Data/prediction: " + str(Num_selected_dict["beamgood"]/selected_bkg_sum))
+        
+def Save_preselected_pkls(Prepared_dict, Params, loc_pkls, save_str):
+    """
+    Pass the \"Prepared dict\" to be saved as Preselected .pkl files.
+    Saves the prselected .pkls in the location specified.
+    """
+    Run=Params["Run"]
+    for sample in Prepared_dict:
+        print("Saving "+Params["Run"]+f" Preselected {sample} .pkl")
+        start_str = loc_pkls
+        end_str = save_str
+        if sample in Constants.Detector_variations: #overlay DetVars
+            start_str += f"DetVars/Preselected_overlay_"
+            end_str = Params["Reduced_state"] + "_" + end_str
+        elif Params["Load_Signal_DetVars"] == True: #e+e- DetVars
+            start_str += f"Signal_DetVars/Preselected_"
+            end_str = Params["Reduced_state"] + "_" + end_str
+        elif Params["Load_pi0_signal_DetVars"] == True: #pi0 DetVars
+            start_str += f"Signal_DetVars/pi0/Preselected_"
+            end_str = Params["Reduced_state"] + "_" + end_str   
+        elif Params["Load_pi0_signal"] == True:  #pi0 samples
+            start_str += f"pi0_selection/Preselected_"
+        else:
+            start_str += f"Preselected_"
+        
+        # print("Saving as " + f"{start_str}{sample}_{Run}_"+Params["Flat_state"]+f"_{end_str}.pkl")
+        Prepared_dict[sample].to_pickle(f"{start_str}{sample}_{Run}_"+Params["Flat_state"]+f"_{end_str}.pkl")
+
+#------------------------#
+#-------BDT training-----#
+#------------------------#
+
+def Remove_high_trk_score_objects(samples, threshold=0.97):
+    """
+    The pre-selection used to have a track score cut.
+    Now I just do it after the standard pre-selection, before saving the .pkl files
+    """
+    score_cut_dict = {}
+    print(f"Removing tracks with trk_score_v > {threshold}")
+    for sample in samples:
+        score_cut_dict[sample] = samples[sample].copy()
+        score_cut_dict[sample] = score_cut_dict[sample].query(f"trk_score_v < {threshold}")
+    
+    return score_cut_dict
+
+def Prepare_dfs_for_xgb(samples): 
+    """
+    Takes a dictionary of dataframes.
+    Returns a dictionary with non-reco vals changed to -9999.
+    """
+    cleaned_dict = {}
+    print("Changing non-reco values to -9999")
+    for sample in samples:
+        cleaned_dict[sample] = samples[sample].copy()
+        value = -1e15
+        new_value = -9999
+        first_entry = cleaned_dict[sample].index[0]
+        for variable in cleaned_dict[sample].keys():
+            if isinstance(cleaned_dict[sample][variable][first_entry], (int,float,np.int32,np.float32,np.uint32)):
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] < value]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] < value), variable] = new_value #Sets the new value
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == -1.0]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == -1.0), variable] = new_value #Sets the new value
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.nan]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.nan), variable] = new_value #Sets the new value
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.inf]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.inf), variable] = new_value #Sets the new value
+ 
+    return cleaned_dict
+
+# def Sophisticated_dfs_for_xgb(df): #Requires a minimum of 2 reconstructed objects
+#     #Take highest E object
+#     print("Write this")
+#     variable = 'pfnplanehits_Y'
+    # df.loc
+    #Look at 2nd highest E object, if within x cm save these two
+    #If not look for next highest E object and repeat. 
+    #If exhausted of objects, remove event
+    
+    #Make event-wise variables to feed into BDT
+    #Save opening angle
+    #Save theta, phi of highest E object
+    #Save theta, phi of lower E object
+    #Save length of highest E object
+    #Save length of lower E object
+    #Save invariant mass of 2 objects
+    #Save total E of both objects
+
+def only_keep_highest_E(samples):
+    """
+    Takes a dictionary of dataframes.
+    Returns a dictionary with only the highest energy objects remaining.
+    """
+    highest_E_samples = {}
+    print("Only keeping object with highest associated pfnplanehits_Y")
+    for sample in samples:
+        highest_E_samples[sample] = samples[sample].copy()
+        highest_E_samples[sample]["highest_E"]=highest_E_samples[sample]['pfnplanehits_Y'].groupby("entry").transform(max) == highest_E_samples[sample]['pfnplanehits_Y']
+        highest_E_samples[sample] = highest_E_samples[sample].query("highest_E").copy()
+    return highest_E_samples
+
+def only_keep_highest_E_OLD(df):
     df["highest_E"]=df['pfnplanehits_Y'].groupby("entry").transform(max) == df['pfnplanehits_Y']
     df_new = df.query("highest_E").copy()
     return df_new
