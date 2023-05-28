@@ -736,6 +736,78 @@ def Get_ev_nums_weights_POT(Run):
         return Constants.run1_event_numbers, Constants.run1_sum_weights, Constants.run1_POT_scaling_dict
     if Run == "run3":
         return Constants.run3_event_numbers, Constants.run3_sum_weights, Constants.run3_POT_scaling_dict
+    
+def Get_significance_after_cut(Params, samples, cut):
+    """
+    Input Params, samples and cut (string used for .query()).
+    Returns single number which is signal/sqrt(Total_bkg)
+    """
+    Preselected = {}
+    Num_dict = {}
+    
+    ev_numbers, ev_sum_weights, POT_norm = Get_ev_nums_weights_POT(Params["Run"])
+    
+    if Params["Load_lepton_signal"] == True: HNL_masses = Constants.HNL_ee_samples_names
+    if Params["Load_pi0_signal"] == True: HNL_masses = Constants.HNL_mass_pi0_samples_names
+    if (Params["Load_pi0_signal"] == True) and (Params["Load_lepton_signal"] == True): 
+        HNL_masses = Constants.HNL_ee_samples_names+Constants.HNL_mass_pi0_samples_names
+    if Params["Load_lepton_dirac"] == True: HNL_masses = Constants.HNL_ee_dirac_names
+    if Params["Load_pi0_dirac"] == True: HNL_masses = Constants.HNL_pi0_dirac_names
+    
+    for sample in samples:
+        
+        Preselected[sample]=samples[sample].copy()
+
+        Preselected[sample]=Preselected[sample].query(cut)
+        if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+            unique_placeholder = make_unique_events_df(Preselected[sample]) #Get number of events, not objects
+            weight = unique_placeholder["weight"]
+            Num_selected = sum(weight)*POT_norm[sample]
+        elif sample in HNL_masses:
+            unique_placeholder = make_unique_events_df(Preselected[sample]) #Get number of events, not objects
+            Num_selected = len(unique_placeholder)
+        else:
+            unique_placeholder = make_unique_events_df(Preselected[sample]) #Get number of events, not objects
+            Num_selected = len(unique_placeholder)*POT_norm[sample]
+
+        Num_dict[sample]=Num_selected
+    
+    Tot_bkg = Num_dict["overlay"]+Num_dict["dirtoverlay"]+Num_dict["beamoff"]
+    
+    max_Num = 0
+    min_Num = 1e7
+    for HNL_mass in HNL_masses:
+        if Num_dict[HNL_mass] > max_Num: max_Num = Num_dict[HNL_mass]
+        if Num_dict[HNL_mass] < min_Num: min_Num = Num_dict[HNL_mass]
+    
+    Significance_max = max_Num/np.sqrt(Tot_bkg)
+    Significance_min = min_Num/np.sqrt(Tot_bkg)
+    
+    return Significance_max, Significance_min
+
+def Significance_scan(Params, samples_dict, cut_string_start, scan_start, scan_end, numsteps=20):
+    """
+    Scans through cut values to find the maximum significance.
+    """
+    Significance_dict_max, Significance_dict_min = {}, {}
+    var_scan = np.linspace(scan_start, scan_end, numsteps)
+    cut_scan = []
+    for var in var_scan:
+        cut_scan.append(cut_string_start + str(var))
+        
+    for i, cut in enumerate(cut_scan):
+        var = var_scan[i]
+        Significance_max, Significance_min = Get_significance_after_cut(Params, samples_dict, cut)
+        Significance_dict_max[var] = Significance_max
+        Significance_dict_min[var] = Significance_min
+        
+    var_sig_max = max(Significance_dict_max, key=Significance_dict_max.get)
+    var_sig_min = max(Significance_dict_min, key=Significance_dict_min.get)
+    
+    print(f"Maximum signal max significance is at {var_sig_max}")
+    print(f"Minimum signal max significance is at {var_sig_min}")
+    
+    return Significance_dict_max, Significance_dict_min, var_sig_max, var_sig_min
 
 
 def Print_efficiency_numbers(Params, Preselected_dict, Efficiency_dict):
@@ -769,6 +841,42 @@ def Print_efficiency_numbers(Params, Preselected_dict, Efficiency_dict):
 
     if "beamgood" in Num_selected_dict.keys():
         print("Data/prediction: " + str(Num_selected_dict["beamgood"]/selected_bkg_sum))
+        
+def Get_effic_wrt_previous(Params, Preselection_dict, Efficiency_dict):
+    """
+    Input Params and dict of absolute efficiencies.
+    Returns a dict of efficiencies wrt previous cut and list of signal min and max for that.
+    """
+    effic_wrt_prev = {}
+    lowest_signal_wrt_prev, highest_signal_wrt_prev = {}, {}
+    for sample in Efficiency_dict:
+        effic_list = []
+        for i, effic in enumerate(Efficiency_dict[sample]):
+            if i==0: continue
+            effic_list.append(Efficiency_dict[sample][i]/Efficiency_dict[sample][i-1])
+        effic_wrt_prev[sample] = effic_list
+
+    lowest_signal_wrt_prev, highest_signal_wrt_prev = [], []
+
+    if Params["Load_lepton_signal"] == True: HNL_masses = Constants.HNL_ee_samples_names
+    if Params["Load_pi0_signal"] == True: HNL_masses = Constants.HNL_mass_pi0_samples_names
+    if (Params["Load_pi0_signal"] == True) and (Params["Load_lepton_signal"] == True): 
+        HNL_masses = Constants.HNL_ee_samples_names+Constants.HNL_mass_pi0_samples_names
+
+    if Params["Load_lepton_dirac"] == True: HNL_masses = Constants.HNL_ee_dirac_names
+    if Params["Load_pi0_dirac"] == True: HNL_masses = Constants.HNL_pi0_dirac_names
+
+    for i in range(len(Preselection_dict)):
+        min_presel_effic, max_presel_effic = 1.0, 0.0
+        for HNL_mass in HNL_masses: 
+            if effic_wrt_prev[HNL_mass][i] > max_presel_effic:
+                max_presel_effic = effic_wrt_prev[HNL_mass][i]
+            if effic_wrt_prev[HNL_mass][i] < min_presel_effic:
+                min_presel_effic = effic_wrt_prev[HNL_mass][i]
+        highest_signal_wrt_prev.append(max_presel_effic)
+        lowest_signal_wrt_prev.append(min_presel_effic)
+    
+    return effic_wrt_prev, lowest_signal_wrt_prev, highest_signal_wrt_prev
         
 def Save_preselected_pkls(Prepared_dict, Params, loc_pkls, save_str):
     """

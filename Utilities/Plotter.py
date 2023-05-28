@@ -712,6 +712,27 @@ def HNL_scaling_calculator(samples=[], sample_norms=[]): #Prints the value which
     
     print("The ratio of all bkgs to HNL events is " + "%.0f" % ratio_all_bkg_HNL + "\n")
     
+def Plot_significance_scan(variable, Significance_dict_max, Significance_dict_min, var_sig_max, var_sig_min):
+    """
+    Plot the maximum and minimum significanes across signal samples.
+    """
+    plt.plot(Significance_dict_max.keys(), Significance_dict_max.values(), label="Maximum significance", lw=2)
+    plt.plot(Significance_dict_min.keys(), Significance_dict_min.values(), label="Minimum significance", lw=2)
+
+    plt.axvline(var_sig_max, color="black", linestyle="dashed")
+    plt.axvline(var_sig_min, color="black", linestyle="dashed")
+
+    plt.ylabel("Significance")
+    plt.xlabel(f"{variable} cut")
+    plt.legend()
+    
+    plt.tight_layout()
+    
+    save_fig = input("Do you want to save the figure? y/n ")
+    if save_fig == 'y':
+        plt.savefig("plots/Preselection_significances/Significance_scan_"+Params["Run"]+ f"_{variable}.png")
+        plt.savefig("plots/Preselection_significances/Significance_scan_"+Params["Run"]+ f"_{variable}.pdf")
+    
 
 def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Preselection_signal_min, Preselection_signal_max, log=True):
     """
@@ -751,6 +772,60 @@ def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Pre
     if save_fig == 'y':
         plt.savefig("plots/Preselection_efficiencies/Preselection_efficiency_"+Params["Run"]+ f"_{logscale}{weighted_name}.png")
         plt.savefig("plots/Preselection_efficiencies/Preselection_efficiency_"+Params["Run"]+ f"_{logscale}{weighted_name}.pdf")
+        
+def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_signal_wrt_prev, highest_signal_wrt_prev):
+    """
+    Input Params, efficiency dict and low and high signal effic lists (wrt prev step).
+    Plots the efficiencies wrt the previous step.
+    """
+    var_names = []
+    for var in Preselection_dict.keys():
+        var_names.append(Constants.presel_var_names[var])
+    
+    plotting_effic_dict = {'overlay':effic_wrt_prev['overlay'], 'dirtoverlay':effic_wrt_prev['dirtoverlay'],
+                          'beamoff':effic_wrt_prev['beamoff']}
+    label_effic_dict = {'overlay':fr"In-Cryo $\nu$", 'dirtoverlay':fr"Out-Cryo $\nu$",
+                          'beamoff':f"Beam-Off"}
+    plotting_effic_colours = Constants.sample_colours
+    
+    plt.figure(figsize=[10,8])
+    
+    x = np.arange(0, len(effic_wrt_prev['overlay'])+1)
+    xticks = var_names
+    bin_cents, centre_bars = [], []
+    for i, val in enumerate(x):
+        bin_cents.append((2*val+1)/2) 
+        centre_bars.append((2*val+1)/2+0.5)
+    bin_cents.pop()
+
+    for sample in plotting_effic_dict:
+        plt.hist(bin_cents, bins=x, weights=effic_wrt_prev[sample], label=label_effic_dict[sample], histtype="step", 
+                 color=plotting_effic_colours[sample], lw=2)
+
+    hist_high, edges_high = np.histogram(bin_cents, bins=x, weights=highest_signal_wrt_prev)
+    hist_low, edges_low = np.histogram(bin_cents, bins=x, weights=lowest_signal_wrt_prev)
+    hist_high = np.hstack((0, np.repeat(hist_high, 2), 0))
+    edges_low = np.repeat(edges_low, 2)
+    hist_low = np.hstack((0, np.repeat(hist_low, 2), 0))
+
+    plt.hist(bin_cents, bins=x, weights=highest_signal_wrt_prev, histtype="step", color="darkred", lw=2)
+    plt.hist(bin_cents, bins=x, weights=lowest_signal_wrt_prev, histtype="step", color="darkred", lw=2)
+
+    plt.fill_between(edges_low, hist_low, hist_high, color='red', label="HNL (Range)")
+
+    plt.xticks(bin_cents,var_names,rotation=80)
+    plt.ylabel("Fraction Selected \n wrt previous")
+    plt.legend(loc='best',prop={'size': 16})
+
+    plt.tight_layout()
+    
+    save_fig = input("Do you want to save the figure? y/n ")
+    if Params["FLATTEN"] == False: weighted_name = "non_weighted_FINAL"
+    if Params["FLATTEN"] == True: weighted_name = "weighted_BOTH_FINAL"
+    if save_fig == 'y':
+        plt.savefig("plots/Preselection_efficiencies/Efficiency_wrt_previous_"+Params["Run"]+ f"_{weighted_name}.png")
+        plt.savefig("plots/Preselection_efficiencies/Efficiency_wrt_previous_"+Params["Run"]+ f"_{weighted_name}.pdf")
+        
 # def Presel_efficiency():
 
 # def Plot_BDT_input():

@@ -32,13 +32,23 @@ TPCzhi=1037
 max_extent_cut=f"min_y>{min_y_cut} and max_y<{max_y_cut} and min_z>{min_z_cut} and max_z<{max_z_cut}" + " and "+f"min_x>{min_x_cut} and max_x<{max_x_cut}"
 
 Preselection_dict = {"nslice":"nslice==1",
-"flash_time":"flash_time > 6.55 and flash_time < 16.5",
+"flash_time":"flash_time > 6.25 and flash_time < 16.5",
 "nu_flashmatch_score":"nu_flashmatch_score < 15",#may need to take out.
 "NeutrinoEnergy2":"NeutrinoEnergy2 < 500",
 "Fiducial_cut":max_extent_cut,
-"contained_fraction":"contained_fraction > 0.9",
+"contained_fraction":"contained_fraction > 0.9"
 # "trk_score_v":"trk_score_v < 0.97", #Took out after confusion about this coming before n_pfps
-"n_pfps":"n_pfps < 6"
+# "n_pfps":"n_pfps < 6" #Took out after finding it didn't do much at all.
+} #Should I add topological score cut?
+
+Tight_Preselection_dict = {"nslice":"nslice==1",
+"flash_time":"flash_time > 6.3 and flash_time < 16.5",
+"nu_flashmatch_score":"nu_flashmatch_score < 10",#may need to take out.
+"NeutrinoEnergy2":"NeutrinoEnergy2 < 300",
+"Fiducial_cut":max_extent_cut,
+"contained_fraction":"contained_fraction == 1.0"
+# "trk_score_v":"trk_score_v < 0.97", #Took out after confusion about this coming before n_pfps
+# "n_pfps":"n_pfps < 6" #Took out after finding it didn't do much at all.
 } #Should I add topological score cut?
 
 
@@ -57,9 +67,9 @@ Preselection_dict_for_plot = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.55 and flash_time < 16.5",
 "nu_flashmatch_score":"nu_flashmatch_score < 15",
 "NeutrinoEnergy2":"NeutrinoEnergy2 < 500",
-"contained_fraction":"contained_fraction > 0.9",
+"contained_fraction":"contained_fraction > 0.9"
 # "trk_score":"trk_score < 0.97",
-"n_pfps":"n_pfps < 6"
+# "n_pfps":"n_pfps < 6"
 }
 
 Preselection_dict_crtveto = {"crtveto":"crtveto==0"}
