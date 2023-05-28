@@ -27,7 +27,7 @@ Final_variable_list = event_vars + multiplicity_vars + swtrig_vars + Fiducial_va
 Final_variable_list_MC = Final_variable_list + weight_related
 
 #Variables used in Pre-selection
-Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy2","contained_fraction","trk_score","trk_score_v","n_pfps"] + swtrig_vars
+Preselection_vars = ["nslice","flash_time","nu_flashmatch_score","NeutrinoEnergy2","contained_fraction","trk_score","trk_score_v","n_pfps", 'topological_score'] + swtrig_vars
 Preselection_vars_MC = Preselection_vars + weight_related
 Preselection_vars_CRT = Preselection_vars+["crtveto"]
 Preselection_vars_CRT_MC = Preselection_vars_CRT+weight_related

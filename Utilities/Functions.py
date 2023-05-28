@@ -379,7 +379,7 @@ def New_load_and_pkl(samples, sample_loc, loc_pkls, common_evs, Params, save_str
         new_file = Make_new_vars(df_file, sample, Params) #Edits weight tune, creates weights, event ids and fiducial variables
         final_file = make_filtered_events(new_file, sample, common_evs, Params) #For getting rid of events which aren't in all Detvar samples     
 
-        print("Pickling "+Params["Run"]+f" overlay {sample} file")
+        print("Pickling "+Params["Run"]+f" {sample} file")
         filename = get_pkl_savename(sample, loc_pkls, Params)
         final_file.to_pickle(filename+save_str+".pkl")
         del(final_file)
