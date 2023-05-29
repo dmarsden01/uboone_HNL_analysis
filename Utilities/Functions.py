@@ -888,6 +888,8 @@ def Save_preselected_pkls(Prepared_dict, Params, loc_pkls, save_str):
         print("Saving "+Params["Run"]+f" Preselected {sample} .pkl")
         start_str = loc_pkls
         end_str = save_str
+        split_end = sample.split("_")[-1]
+        split_start = sample.split("_")[0]
         if sample in Constants.Detector_variations: #overlay DetVars
             start_str += f"DetVars/Preselected_overlay_"
             end_str = Params["Reduced_state"] + "_" + end_str
@@ -897,7 +899,8 @@ def Save_preselected_pkls(Prepared_dict, Params, loc_pkls, save_str):
         elif Params["Load_pi0_signal_DetVars"] == True: #pi0 DetVars
             start_str += f"Signal_DetVars/pi0/Preselected_"
             end_str = Params["Reduced_state"] + "_" + end_str   
-        elif Params["Load_pi0_signal"] == True:  #pi0 samples
+        # elif Params["Load_pi0_signal"] == True:  #pi0 samples
+        elif split_end == "pi0":  #pi0 samples
             start_str += f"pi0_selection/Preselected_"
         else:
             start_str += f"Preselected_"
