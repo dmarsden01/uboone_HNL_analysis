@@ -687,8 +687,8 @@ def Preselection_DetVars(samples, cut_dict): #Not making efficiency plots for De
     Returns dict of the pre-selected samples.
     """
     Preselected = {}
-    Preselected[sample]=samples[sample].copy()
     for sample in samples:
+        Preselected[sample]=samples[sample].copy()
         for cut in cut_dict.keys():
             Preselected[sample]=Preselected[sample].query(cut_dict[cut])
     
@@ -944,6 +944,37 @@ def Prepare_dfs_for_xgb(samples):
                     cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.nan), variable] = new_value #Sets the new value
                 if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.inf]) > 0):
                     cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.inf), variable] = new_value #Sets the new value
+ 
+    return cleaned_dict
+
+def Fixed_Prepare_dfs_for_xgb(samples): 
+    """
+    Takes a dictionary of dataframes.
+    Returns a dictionary with non-reco vals changed to -9999.
+    """
+    cleaned_dict = {}
+    print("Changing non-reco values to -9999")
+    for sample in samples:
+        cleaned_dict[sample] = samples[sample].copy()
+        value = -1e15
+        new_value = -9999
+        first_entry = cleaned_dict[sample].index[0]
+        for variable in cleaned_dict[sample].keys():
+            if isinstance(cleaned_dict[sample][variable][first_entry], (int,float,np.int32,np.float32,np.uint32)):
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] < value]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] < value), variable] = new_value #Gets rid of hugely negative values
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == -1.0]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == -1.0), variable] = new_value #Gets rid of exactly -1.0
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.nan]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.nan), variable] = new_value #Gets rid of nans
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.inf]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.inf), variable] = new_value #Gets rid of infs
+                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] > (-1*value)]) > 0):
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] > (-1*value)), variable] = new_value #Gets rid of hugely positive values
+                if variable in ["shr_energy_tot", "trk_energy", "trk_energy_hits_tot", "trk_energy_tot"]:
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == 0.0), variable] = new_value #Sets non-reco trk, shr energies to -9999
+                if variable == "subcluster":
+                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] > 2e8), variable] = new_value #Sets non-reco subcluster to -9999
  
     return cleaned_dict
 

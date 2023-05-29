@@ -39,17 +39,18 @@ Preselection_dict = {"nslice":"nslice==1",
 "contained_fraction":"contained_fraction > 0.9"
 # "trk_score_v":"trk_score_v < 0.97", #Took out after confusion about this coming before n_pfps
 # "n_pfps":"n_pfps < 6" #Took out after finding it didn't do much at all.
-} #Should I add topological score cut?
+} #"topological_score":"topological_score < 0.98"
 
 Tight_Preselection_dict = {"nslice":"nslice==1",
 "flash_time":"flash_time > 6.3 and flash_time < 16.5",
 "nu_flashmatch_score":"nu_flashmatch_score < 10",#may need to take out.
 "NeutrinoEnergy2":"NeutrinoEnergy2 < 300",
 "Fiducial_cut":max_extent_cut,
-"contained_fraction":"contained_fraction == 1.0"
+"contained_fraction":"contained_fraction == 1.0",
+"topological_score":"topological_score < 0.98"
 # "trk_score_v":"trk_score_v < 0.97", #Took out after confusion about this coming before n_pfps
 # "n_pfps":"n_pfps < 6" #Took out after finding it didn't do much at all.
-} #Should I add topological score cut?
+} 
 
 
 Preselection_dict_pi0 = {"nslice":"nslice==1",
@@ -294,7 +295,7 @@ sample_colours = {'overlay':'mediumblue',
 presel_var_names = {'nslice':"Neutrino slice", 'flash_time':"Flash time", 'nu_flashmatch_score':"Flashmatch score", 
                     'NeutrinoEnergy2':"Energy in slice", 'Fiducial_cut':"Fiducial volume", 
                     'contained_fraction':"Containted fraction", 'trk_score_v':"Track score",'trk_score':"Track score",
-                    'n_pfps':"Object multiplicity", 'crtveto':"CRT veto"}
+                    'n_pfps':"Object multiplicity", 'crtveto':"CRT veto", 'topological_score': "Topological score"}
 
 variable_names_dict = {'nslice':"Neutrino slice", #Should contain all names for possible variables to be plotted
                        'flash_time': r"Flash time [$\mu$s]",
@@ -330,7 +331,8 @@ variable_names_dict = {'nslice':"Neutrino slice", #Should contain all names for 
                        "Fiducial_cut": "Fiducial volume",
                        "min_x": "Minimum extent in x [cm]","max_x": "Maximum extent in x [cm]",
                        "min_y": "Minimum extent in y [cm]","max_y": "Maximum extent in y [cm]",
-                       "min_z": "Minimum extent in z [cm]","max_z": "Maximum extent in z [cm]"}
+                       "min_z": "Minimum extent in z [cm]","max_z": "Maximum extent in z [cm]",
+                       'topological_score': "Topological score"}
 
 limit_locs = {"SIN":'limit_files/SIN_BR_ratio.csv',
               "PIENU":'limit_files/PIENU_2019.csv',

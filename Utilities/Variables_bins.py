@@ -36,7 +36,8 @@ Presel_bins = {'shrclusdir2':np.linspace(0,360, 21),
                'min_y':np.linspace(-117,117,41),
                'max_y':np.linspace(-117,117,41),
                'min_z':np.linspace(0,1040,41),
-               'max_z':np.linspace(0,1040,41)}
+               'max_z':np.linspace(0,1040,41),
+               'topological_score':np.linspace(0,1.0,41)}
 
 Log_vars = {'shrclusdir2':False,
                'n_tracks':True,
@@ -74,7 +75,8 @@ Log_vars = {'shrclusdir2':False,
                'min_y':True,
                'max_y':True,
                'min_z':True,
-               'max_z':True}
+               'max_z':True,
+               'topological_score':True}
 
 BDT_vars_bins = {'shrclusdir2':np.linspace(0,360, 21),
                  'n_tracks':np.linspace(-0.5,5.5, 7),
@@ -112,7 +114,8 @@ BDT_vars_bins = {'shrclusdir2':np.linspace(0,360, 21),
                  'min_y':np.linspace(-112,112,41),
                  'max_y':np.linspace(-112,112,41),
                  'min_z':np.linspace(14,1020,41),
-                 'max_z':np.linspace(14,1020,41)}
+                 'max_z':np.linspace(14,1020,41),
+                 'topological_score':np.linspace(0,1.0,41)}
 
 cut_lines = {'nslice':[0.5],
              'n_pfps':[6.5],
