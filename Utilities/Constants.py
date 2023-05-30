@@ -110,8 +110,12 @@ pi0_scaling_factor = 0.759 #For standard NuMI overlay files
 
 Run1_POT = 2e20 #Taken from the NuMI samples page
 Run3_POT = 5.0e20 #Taken from the NuMI samples page
+Run2a_POT = 3.3150e20
+Run2b_POT = 1.334e20
 OnBeam_EA9CNT_wcut_run1 = 5268051.0 #"Triggers" taken from the NuMI samples page
 OnBeam_EA9CNT_wcut_run3 = 10363728.0 #"Triggers" taken from the NuMI samples page
+OnBeam_EA9CNT_run2a = 8370956
+OnBeam_EA9CNT_run2b = 3167451
 BeamOff_scaling_for_nus = 0.98 #This Factor described by Owen: Look in script 1_POT...
 DIRT_run1_scaling = 0.75 #NOT SURE where this comes from, apparently it is standard procedure for NuMI DIRT
 DIRT_run3_scaling = 0.35 #NOT SURE where this comes from, apparently it is standard procedure for NuMI DIRT
@@ -178,7 +182,17 @@ run3_event_numbers = {2: 45159,
                      "overlay": 748702,
                      "dirtoverlay": 389264,
                      "beamoff": 3211097,
-                     "beamgood": 1104349}  
+                     "beamgood": 1104349}
+
+run2a_event_numbers = {"overlay":421840,
+                       "beamon":762814,
+                       "beamoff":1641015,
+                       "dirtoverlay": 569506} #currently using run1 dirt
+
+run2b_event_numbers = {"overlay":404374,
+                       "beamon":283307,
+                       "beamoff":1044584,
+                       "dirtoverlay": 389264} #currently using run3 dirt
 
 run1_sum_weights = {"overlay": 867669.0,"dirtoverlay": 535760.1}
 run3_sum_weights = {"overlay": 704253.8,"dirtoverlay": 363852.9}
@@ -244,6 +258,38 @@ run3_POT_scaling_dict = {2: 1.4264872844261716e-07, #All ee samples (up to 150Me
                          "dirtoverlay": 0.16953052634982632,
                          "beamoff": 0.3089104916683624,
                          "beamgood": 1.0}
+
+run2a_POT_scaling_dict = {"overlay": 0.3072190227452281,
+                          "dirtoverlay": 0.14852927739150426, #Using run1 dirt sample for now, should recalculate when properly processed
+                          "150_pi0": 3.8928786448252986e-06, #Just using run1 signal samples
+                          "180_pi0": 4.5967504159589966e-05,
+                          "200_pi0": 0.00013278931456747346,
+                          "220_pi0": 0.0002820927676910402,
+                          "240_pi0": 0.0005792356954086145,
+                          "245_pi0": 0.0006518146027967544,
+                          "2_ee": 1.1792838702171349e-07,
+                          "10_ee": 7.32679472561424e-07,
+                          "20_ee": 4.4612203501508157e-13,
+                          "50_ee": 1.4547758904512813e-10,
+                          "100_ee": 1.3884668191194237e-08,
+                          "150_ee": 1.1945101874544048e-08,
+                          "beamoff": 0.4495411879362596} #Probably using incorrect triggers here, database not updated
+
+run2b_POT_scaling_dict = {"overlay": 0.12403061136549995,
+                          "dirtoverlay": 0.09692302377885786, #Using run3 dirt sample for now, should recalculate when properly processed
+                          "150_pi0": 9.665513953403007e-07, #Just using run3 signal samples
+                          "180_pi0": 1.4154082681322143e-05,
+                          "200_pi0": 4.0437269688880344e-05,
+                          "220_pi0": 8.911090034032918e-05,
+                          "240_pi0": 0.0001690716673356859,
+                          "245_pi0": 0.00020686346434705663,
+                          "2_ee": 3.539385567467034e-08,
+                          "10_ee": 2.1370383665367285e-07,
+                          "20_ee": 1.3540073719836057e-13,
+                          "50_ee": 4.428493644764708e-11,
+                          "100_ee": 4.242079569696643e-09,
+                          "150_ee": 3.5664644766053507e-09,
+                          "beamoff":0.2591202208437068}
 
 run1_overlay_detvar_POT = {"WireModX":3.67e20, #Just taken from spreadsheet, but matches the POT saved in the Trees
                            "WireModYZ":3.7e20,
@@ -355,12 +401,12 @@ limit_colours = {"SIN":"C17",
 #------OLD constants, for depricated code and samples------#
 #----------------------------------------------------------#
 
-sampling_fix_scalings = {2: 0.0313, #Sceptical of 2MeV POT counting because I used such a large mixing angle. Not sure if correct
-                         10: 0.0987, #This dict is only here for reference, it is now folded into the new "POT_scaling" dicts 
-                         20: 0.1042,
-                         50: 0.1060, 
-                         100: 0.1043,
-                         150: 0.0452,
+sampling_fix_scalings = {"2_ee": 0.0313, #Sceptical of 2MeV POT counting because I used such a large mixing angle. Not sure if correct
+                         "10_ee": 0.0987, #This dict is only here for reference, it is now folded into the new "POT_scaling" dicts 
+                         "20_ee": 0.1042,
+                         "50_ee": 0.1060, 
+                         "100_ee": 0.1043,
+                         "150_ee": 0.0452,
                          "150_pi0": 0.5646,
                          "180_pi0": 0.8187,
                          "200_pi0": 0.8541,

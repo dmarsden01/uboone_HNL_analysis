@@ -74,9 +74,9 @@ def new_create_sample_list(Params):
         Params["variables"] = Variables.Final_variable_list
         Params["variables_MC"] = Variables.Final_variable_list_MC
 
-    if Params["Run"] == "run1": Params["current"] = "FHC"
-    elif Params["Run"] == "run3": Params["current"] = "RHC"
-    else: print("Need to choose either \"run1\" or \"run3\"")
+    if (Params["Run"] == "run1") or (Params["Run"] == "run2a"): Params["current"] = "FHC"
+    elif (Params["Run"] == "run3") or (Params["Run"] == "run2b"): Params["current"] = "RHC"
+    else: print("Need to choose either \"run1\", \"run3\", \"run2a\" or \"run2b\"")
     
     samples = []
     if Params["Load_standard_bkgs"] == True: samples.extend(["overlay","dirtoverlay","beamoff"])
@@ -174,13 +174,22 @@ def create_sample_list(Params): #Returns an extended parameter dict and a the li
 
 def Get_all_sample_locs(Params):
     Run = Params["Run"]
-    if Run == "run1": current = "FHC"
-    elif Run == "run3": current = "RHC"
-
-    sample_loc_dict = {"overlay":f'../NuMI_MC/SLIMMED_neutrinoselection_filt_{Run}_overlay.root',
-                       "dirtoverlay":f'../NuMI_MC/neutrinoselection_filt_{Run}_dirt_overlay.root',
-                       "beamoff":f'../NuMI_data/neutrinoselection_filt_{Run}_beamoff.root',
-                       "beamgood":f'../NuMI_data/neutrinoselection_filt_{Run}_beamon_beamgood.root'}
+    if (Run == "run1")  or (Run == "run2a"): current = "FHC"
+    elif (Run == "run3") or (Run == "run2b"): current = "RHC"
+    
+    if (Run == "run1") or (Run == "run3"):
+        sample_loc_dict = {"overlay":f'../NuMI_MC/SLIMMED_neutrinoselection_filt_{Run}_overlay.root',
+                           "dirtoverlay":f'../NuMI_MC/neutrinoselection_filt_{Run}_dirt_overlay.root',
+                           "beamoff":f'../NuMI_data/neutrinoselection_filt_{Run}_beamoff.root',
+                           "beamgood":f'../NuMI_data/neutrinoselection_filt_{Run}_beamon_beamgood.root'}
+        
+    if (Run == "run2a") or (Run == "run2b"):
+        if Run == "run2a": edited_run = "run1"
+        if Run == "run2b": edited_run = "run3"
+        sample_loc_dict = {"overlay":f'../NuMI_MC/SLIMMED_neutrinoselection_filt_{Run}_overlay.root',
+                           "dirtoverlay":f'../NuMI_MC/neutrinoselection_filt_{edited_run}_dirt_overlay.root',
+                           "beamoff":f'../NuMI_data/neutrinoselection_filt_{Run}_beamoff.root',
+                           "beamgood":f'../NuMI_data/neutrinoselection_filt_{Run}_beamon.root'}
     
     signal_start_str = f'../NuMI_signal/KDAR_dump/sfnues/'
     #Majorana ee
@@ -206,6 +215,9 @@ def Get_all_sample_locs(Params):
     if Run=="run3":
         DetVar_ee_masses = Constants.Run3_ee_DetVar_samples
         DetVar_pi0_masses = Constants.Run3_pi0_DetVar_samples
+    else: 
+        DetVar_ee_masses = []
+        DetVar_pi0_masses = []
     #ee DetVars
     for mass in DetVar_ee_masses:       
         for DetVar in Constants.Detector_variations:
@@ -1027,7 +1039,7 @@ def create_test_samples_list(Params): #Returns the list of samples to run over
         samples.extend(Constants.HNL_mass_pi0_samples_names)
         # for HNL_mass in Constants.HNL_mass_pi0_samples_names:
             # samples+=[str(HNL_mass)+"_pi0"]
-    if Params["Load_lepton_dirac"] == True: samples.extend(Constants.HNL_ee_dirac_mass_samples)
+    if Params["Load_lepton_dirac"] == True: samples.extend(Constants.HNL_ee_dirac_names)
     if Params["Load_pi0_dirac"] == True: samples.extend(Constants.HNL_pi0_dirac_names)
     
     if Params["Load_DetVars"] == True: #This is overlay DetVars
