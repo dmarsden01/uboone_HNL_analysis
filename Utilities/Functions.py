@@ -118,59 +118,6 @@ def new_create_sample_list(Params):
     
     return Params, samples
 
-def create_sample_list(Params): #Returns an extended parameter dict and a the list of samples to run over
-    if Params["FLATTEN"] == True: Params["Flat_state"] = "flattened"
-    else: Params["Flat_state"] = "unflattened"
-    if Params["Only_keep_common_DetVar_evs"] == True: Params["Reduced_state"] = "reduced_evs"
-    else: Params["Reduced_state"] = "all_evs"
-
-    if Params["only_presel"]: #Only loading variables for preselection plots
-        Params["variables_string"] = "Presel_vars"
-        Params["variables"] = Variables.Preselection_vars_CRT + Variables.event_vars
-        Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.event_vars
-    elif Params["Load_truth_vars"]:
-        Params["variables_string"] = "Truth_vars"
-        Params["variables"] = Variables.event_vars + Variables.event_vars
-        Params["variables_MC"] = Variables.event_vars + Variables.event_vars
-    else:
-        Params["variables_string"] = "my_vars" #Standard variables I use
-        Params["variables"] = Variables.Final_variable_list
-        Params["variables_MC"] = Variables.Final_variable_list_MC
-
-    if Params["Run"] == "run1": Params["current"] = "FHC"
-    elif Params["Run"] == "run3": Params["current"] = "RHC"
-    else: print("Need to choose either \"run1\" or \"run3\"")
-
-    samples = [] #A list of all the samples which will be loaded and pickled
-    if Params["Load_lepton_signal"] == True: samples.extend(["signal"])
-    if Params["Load_standard_bkgs"] == True: samples.extend(["overlay","dirtoverlay","beamoff"])
-    if Params["Load_pi0_signal"] == True: samples.extend(["pi0_signal"])
-    if Params["Load_DetVars"] == True: samples.extend(Constants.Detector_variations)
-    if Params["Load_Signal_DetVars"] == True:
-        # for HNL_mass in Constants.HNL_mass_samples: #For when all detvar samples are made
-        if Params["Run"] == "run1":
-            for HNL_mass in [50, 100, 150]:
-                for DetVar in Constants.Detector_variations:
-                    samples+=[str(HNL_mass)+"_"+DetVar]
-        if Params["Run"] == "run3":
-            for HNL_mass in [2, 10, 20, 50, 100]: #Don't have 150MeV sample yet
-                for DetVar in Constants.Detector_variations:
-                    samples+=[str(HNL_mass)+"_"+DetVar]
-    if Params["Load_pi0_signal_DetVars"] == True:
-        if Params["Run"] == "run1": print("There are no pi0 detvar samples for run1.")
-        if Params["Run"] == "run3":
-            for HNL_mass in [150, 180, 220, 240,245]: #200 is broken for some reason
-                for DetVar in Constants.Detector_variations:
-                    samples+=[str(HNL_mass)+"_"+DetVar]
-    if Params["Load_data"] == True: samples.extend(["beamgood"])
-    if Params["Load_lepton_dirac"] == True: samples.extend(["lepton_dirac"])
-    if Params["Load_pi0_dirac"] == True: samples.extend(["pi0_dirac"])
-    if Params["Load_single_file"] == True: samples = [Params["single_file"]]
-    
-        
-    print(f"Loading these "+Params["Run"]+" samples: " + "\n" + str(samples))
-    
-    return Params, samples
 
 def Get_all_sample_locs(Params):
     Run = Params["Run"]
@@ -383,11 +330,80 @@ def make_filtered_events(df, sample, common_evs, Params):
         
     return final_file
 
+def Check_fiducial_problems(Params, sample):
+    """
+    For identifying whether certain events would cause issues with creating fiducial vars.
+    Returns True if they would.
+    """
+    if (Params["Run"]=="run2a") and (sample == "beamoff"):
+        return True
+    elif (Params["Run"]=="run3") and (sample == "WireModThetaXZ"):
+        return True
+    else: return False
+
+def Check_swtrig_problems(Params, sample):
+    """
+    For identifying whether certain dataframes are missing \"swtrig_pre\" and \"swtrig_post\".
+    Returns True if they would.
+    """
+    if (Params["Run"]=="run2a" or Params["Run"]=="run2b") and (sample == "beamoff" or sample == "beamgood"):
+        return True
+
+    else: return False
+
+def Remove_fiducial_problem_row(df):
+    """
+    Pass dataframe with n_pfps and \"trk_sce_start_x_v\",\"trk_sce_end_x_v\".
+    Returns a dataframe with rows removed which cause issues with fiducial var creation.
+    """
+    n_pfps = df["n_pfps"].groupby(level="entry").apply(max)
+    df_placeholder = df.query("trk_sce_start_x_v>-1e4").copy()
+    
+    min_x=df_placeholder[["trk_sce_start_x_v","trk_sce_end_x_v"]].min(axis=1).groupby(level="entry").apply(min)
+    
+    n_pfps_entries = n_pfps.index
+    min_x_entries = min_x.index
+    
+    problem_indices = []
+    for index in n_pfps_entries:
+        if index not in min_x_entries: problem_indices.append(index)
+        
+    if len(problem_indices) < 1:
+        print("No problem rows")
+        return df
+    
+    for index in problem_indices:
+        cleaned = df.drop(labels=374939, axis=0)
+    return cleaned
+
+def Create_extra_swtrig_vars(df):
+    """
+    Copies the values of \"swtrig\" to create \"swtrig_pre\" and \"swtrig_post\".
+    Returns the new dataframe.
+    """
+    df['swtrig_pre'] = df['swtrig'].copy()
+    df['swtrig_post'] = df['swtrig'].copy()
+    
+    df.drop(columns=['swtrig'])
+    
+    return df
+
 def New_load_and_pkl(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
     for sample in samples:
         variables = get_vars(sample, Params)
         root_file = uproot3.open(sample_loc[sample])['nuselection/NeutrinoSelectionFilter']
-        df_file = root_file.pandas.df(variables, flatten=Params["FLATTEN"])
+        if(Check_swtrig_problems(Params, sample)):
+            print("swtrig_pre not in vars, creating")
+            variables_placeholder=variables.copy()
+            variables_placeholder.remove('swtrig_pre')
+            variables_placeholder.remove('swtrig_post')
+            variables_placeholder+=['swtrig']
+        else: variables_placeholder=variables.copy()
+        df_file = root_file.pandas.df(variables_placeholder, flatten=Params["FLATTEN"])
+        if(Check_swtrig_problems(Params, sample)):
+            df_file=Create_extra_swtrig_vars(df_file)
+        if(Check_fiducial_problems(Params, sample)):
+            df_file=Remove_fiducial_problem_row(df_file)
         new_file = Make_new_vars(df_file, sample, Params) #Edits weight tune, creates weights, event ids and fiducial variables
         final_file = make_filtered_events(new_file, sample, common_evs, Params) #For getting rid of events which aren't in all Detvar samples     
 
@@ -434,158 +450,6 @@ def Make_common_evs(samples, sample_loc, Params):
         return common_evs_dict
     else: return None
 
-def Load_and_pkl_samples(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
-    for sample in samples: #Looping over all samples, should make a function for this.
-        if sample in Constants.Detector_variations: #Checks if it is an overlay Detector Variation sample
-            print(f"Loading overlay {sample} "+Params["Run"]+" with uproot")
-            NuMI_MC_overlay=uproot3.open(f"../NuMI_MC/DetVars/neutrinoselection_filt_"+Params["Run"]+f"_overlay_{sample}.root")[Constants.root_dir+"/"+Constants.main_tree]
-            df_overlay = NuMI_MC_overlay.pandas.df(Params["variables_MC"], flatten=Params["FLATTEN"])
-            file = df_overlay
-            new_file = file.copy()
-            del(file)
-            if Params["Run"]=="run3":
-                print("skipping fiducal vars")
-                final_file = new_file.copy() # Not making fiducial variables because of broken thetaXZ file
-            else:
-                final_file = Make_fiducial_vars(new_file)
-            del(new_file)
-            Edit_Weight_Tune(final_file)
-            MC_weight_branch(final_file)
-            make_unique_ev_id(final_file) #This creates "rse_id" branch
-            if Params["Only_keep_common_DetVar_evs"] == True:
-                filtered = final_file.loc[(final_file['rse_id'].isin(common_evs['rse_id']))]
-                new_overlay = filtered.copy()
-                del(final_file)
-                del(filtered)
-            else:
-                new_overlay = final_file.copy()
-                del(final_file)
-            print("Pickling "+Params["Run"]+f" overlay {sample} file")
-            new_overlay.to_pickle(loc_pkls+"DetVars/overlay_"+Params["Run"]+"_"+Params["variables_string"]+f"_{sample}_"+Params["Flat_state"]+"_"+Params["Reduced_state"]+save_str+".pkl")
-            del(new_overlay)
-        elif Params["Load_Signal_DetVars"] == True: #I should ONLY load these samples in this case.
-            first_str = sample.split("_")[0]
-            HNL_mass = int(first_str)
-            NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
-            df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
-            file = df_signal
-            new_file = file.copy()
-            del(file)
-            final_file = Make_fiducial_vars(new_file)
-            del(new_file)
-            final_file = make_unique_ev_id(final_file) #This creates "rse_id" branch
-            if Params["Only_keep_common_DetVar_evs"] == True:
-                filtered = final_file.loc[(final_file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
-                new_overlay = filtered.copy()
-                del(final_file)
-                del(filtered)
-            else:
-                new_overlay = final_file.copy()
-                del(final_file)
-            new_overlay.to_pickle(loc_pkls+"Signal_DetVars/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+save_str+".pkl")
-            del(new_overlay)
-                
-        elif Params["Load_pi0_signal_DetVars"] == True: #I should ONLY load these samples in this case.
-            first_str = sample.split("_")[0]
-            HNL_mass = int(first_str)
-            NuMI_MC_signal=uproot3.open("../NuMI_signal/KDAR_dump/sfnues/pi0/DetVars/"+f"{sample}_"+Params["Run"]+".root")[Constants.root_dir+"/"+Constants.main_tree]
-            df_signal = NuMI_MC_signal.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
-            file = df_signal
-            new_file = file.copy()
-            del(file)
-            final_file = Make_fiducial_vars(new_file)
-            del(new_file)
-            final_file = make_unique_ev_id(final_file) #This creates "rse_id" branch
-            if Params["Only_keep_common_DetVar_evs"] == True:
-                filtered = final_file.loc[(final_file['rse_id'].isin(common_evs[HNL_mass]['rse_id']))]
-                new_overlay = filtered.copy()
-                del(final_file)
-                del(filtered)
-            else:
-                new_overlay = final_file.copy()
-                del(final_file)
-            new_overlay.to_pickle(loc_pkls+"Signal_DetVars/pi0/"+Params["Run"]+f"_{sample}_"+Params["Reduced_state"]+save_str+".pkl")
-            del(new_overlay)
-            
-        else: #Standard sample types
-            print(f"Loading {sample} "+Params["Run"]+" file(s) with uproot")
-            # if Constants.sample_type[sample] == "MC_signal": #Meant to be only e+e- signal samples
-            if sample == "signal": #Meant to be only e+e- signal samples
-                for HNL_mass in Constants.HNL_mass_samples:
-                    file_loc = sample_loc[sample]+f"{HNL_mass}_ee_Umu4_majorana_"+Params["current"]+".root"
-                    uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
-                    if Params["Load_truth_vars"] == True:
-                        df_signal = uproot_file.pandas.df(Params["variables"] + Variables.Truth_vars, flatten=Params["FLATTEN"])
-                    else:
-                        df_signal = uproot_file.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
-                    file = df_signal
-                    new_signal = file.copy()
-                    del(file)
-                    if (Params["Load_truth_vars"] == False) and (Params["FLATTEN"] == True):
-                        final_signal = Make_fiducial_vars(new_signal) #New since last save
-                    else:
-                        final_signal = new_signal.copy()
-                    del(new_signal)
-                    print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
-                    final_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
-                    del(final_signal)
-            elif sample == "pi0_signal":
-                for HNL_mass in Constants.HNL_mass_pi0_samples:
-                    file_loc = sample_loc[sample]+f"{HNL_mass}_pi0_Umu4_majorana_"+Params["current"]+".root"
-                    uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
-                    if Params["Load_truth_vars"] == True:
-                        df_signal = uproot_file.pandas.df(Params["variables"] + Variables.Truth_vars, flatten=Params["FLATTEN"])
-                    else:
-                        df_signal = uproot_file.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
-                    file = df_signal
-                    new_signal = file.copy()
-                    del(file)
-                    if Params["Load_truth_vars"] == False:
-                        final_signal = Make_fiducial_vars(new_signal)
-                    if Params["Load_truth_vars"] == True:
-                        final_signal = new_signal.copy()
-                    del(new_signal)
-                    print("Pickling "+Params["Run"]+ f" pi0 {HNL_mass}MeV file")
-                    final_signal.to_pickle(loc_pkls+f"pi0_signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
-                    del(final_signal)
-                    
-            elif (Params["Load_single_file"] == True) and (isinstance(sample,int)):
-                HNL_mass = sample
-                file_loc = sample_loc["signal"]+f"{HNL_mass}_Umu4_majorana_numi_"+Params["current"]+".root"
-                uproot_file = uproot3.open(file_loc)[Constants.root_dir+"/"+Constants.main_tree]
-                if Params["Load_truth_vars"] == True:
-                    df_signal = uproot_file.pandas.df(Params["variables"] + Variables.Truth_vars, flatten=Params["FLATTEN"])
-                else:
-                    df_signal = uproot_file.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
-                file = df_signal
-                new_signal = file.copy()
-                del(file)
-                final_signal = Make_fiducial_vars(new_signal)
-                del(new_signal)
-                print("Pickling "+Params["Run"]+ f" {HNL_mass}MeV file")
-                final_signal.to_pickle(loc_pkls+f"signal_{HNL_mass}MeV_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
-                del(final_signal)
-                    
-            else:
-                uproot_file = uproot3.open(sample_loc[sample])[Constants.root_dir+'/'+Constants.main_tree]
-                if Constants.sample_type[sample] == "MC":
-                    df = uproot_file.pandas.df(Params["variables_MC"], flatten=Params["FLATTEN"])
-                    file = df
-                    Edit_Weight_Tune(file)
-                    MC_weight_branch(file)
-                else:
-                    df = uproot_file.pandas.df(Params["variables"], flatten=Params["FLATTEN"])
-                    file = df
-                new_file = file.copy()
-                del(file)
-                if (Params["Load_truth_vars"] == False) and (Params["FLATTEN"] == True):
-                    final_file = Make_fiducial_vars(new_file)
-                else:
-                    final_file = new_file.copy()
-                del(new_file)
-                print("Pickling "+Params["Run"] +f" {sample} file")
-                final_file.to_pickle(loc_pkls+f"{sample}_"+Params["Run"]+"_"+Params["variables_string"]+"_"+Params["Flat_state"]+save_str+".pkl")
-                del(final_file)
 
 #-----Loading pkls------#
 def Load_initial_pkls(samples, Params, loc_pkls, filename):
@@ -937,31 +801,6 @@ def Remove_high_trk_score_objects(samples, threshold=0.97):
     
     return score_cut_dict
 
-def Prepare_dfs_for_xgb(samples): 
-    """
-    Takes a dictionary of dataframes.
-    Returns a dictionary with non-reco vals changed to -9999.
-    """
-    cleaned_dict = {}
-    print("Changing non-reco values to -9999")
-    for sample in samples:
-        cleaned_dict[sample] = samples[sample].copy()
-        value = -1e15
-        new_value = -9999
-        first_entry = cleaned_dict[sample].index[0]
-        for variable in cleaned_dict[sample].keys():
-            if isinstance(cleaned_dict[sample][variable][first_entry], (int,float,np.int32,np.float32,np.uint32)):
-                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] < value]) > 0):
-                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] < value), variable] = new_value #Sets the new value
-                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == -1.0]) > 0):
-                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == -1.0), variable] = new_value #Sets the new value
-                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.nan]) > 0):
-                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.nan), variable] = new_value #Sets the new value
-                if(len(cleaned_dict[sample].loc[cleaned_dict[sample][variable] == np.inf]) > 0):
-                    cleaned_dict[sample].loc[(cleaned_dict[sample][variable] == np.inf), variable] = new_value #Sets the new value
- 
-    return cleaned_dict
-
 def Fixed_Prepare_dfs_for_xgb(samples): 
     """
     Takes a dictionary of dataframes.
@@ -1023,11 +862,6 @@ def only_keep_highest_E(samples):
         highest_E_samples[sample]["highest_E"]=highest_E_samples[sample]['pfnplanehits_Y'].groupby("entry").transform(max) == highest_E_samples[sample]['pfnplanehits_Y']
         highest_E_samples[sample] = highest_E_samples[sample].query("highest_E").copy()
     return highest_E_samples
-
-def only_keep_highest_E_OLD(df):
-    df["highest_E"]=df['pfnplanehits_Y'].groupby("entry").transform(max) == df['pfnplanehits_Y']
-    df_new = df.query("highest_E").copy()
-    return df_new
 
 def create_test_samples_list(Params): #Returns the list of samples to run over
     samples = [] #A list of all the samples which will be loaded and pickled
@@ -1512,82 +1346,6 @@ def make_xlims_dict(bins_dict, lower = None):
         
     return xlims_adjusted, xticks_adjusted
 
-
-def Calculate_total_uncertainty_OLD(Params, hist_dict, bkg_reweight_err_dict=None, bkg_detvar_dict=None, sig_detvar_dict=None): #Takes the dictionary of all root files
-    BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
-    for HNL_mass in Constants.HNL_mass_samples:
-        bkg_stat_err_list = [hist_dict[HNL_mass]['bkg_overlay'].errors(), 
-                             hist_dict[HNL_mass]['bkg_EXT'].errors(), 
-                             hist_dict[HNL_mass]['bkg_dirt'].errors()]
-        sig_stat_err = hist_dict[HNL_mass]['Signal'].errors()
-        if Params["Stats_only"] == True:
-        #As default the errors saved in the files are stat errors, this will change once I properly calculate them
-            bkg_err_list = bkg_stat_err_list
-            sig_err = sig_stat_err
-        elif Params["Use_flat_sys_bkg"] == True:
-            bkg_sys_err_list = [hist_dict[HNL_mass]['bkg_overlay'].values()*Params["Flat_overlay_bkg_frac"], 
-                                np.zeros_like(hist_dict[HNL_mass]['bkg_EXT'].errors()), #No systematic error on the EXT sample
-                                hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]]
-            bkg_err_list = [add_all_errors([bkg_stat_err_list[0],bkg_sys_err_list[0]]), #adding the sys and stat error in quadrature for each bkg type
-                            add_all_errors([bkg_stat_err_list[1],bkg_sys_err_list[1]]),
-                            add_all_errors([bkg_stat_err_list[2],bkg_sys_err_list[2]])]
-        elif Params["Use_flat_sys_bkg"] == False:
-            ppfx_unc = bkg_reweight_err_dict[HNL_mass]["ppfx_uncertainty"].values()
-            genie_unc = bkg_reweight_err_dict[HNL_mass]["Genie_uncertainty"].values()
-            reint_unc = bkg_reweight_err_dict[HNL_mass]["Reinteraction_uncertainty"].values()
-            detvar_unc = bkg_detvar_dict[HNL_mass]["Total_DetVar_uncertainty"].values() #Don't know what this looks like yet, as I haven't made
-            tot_overlay_sys = add_all_errors([ppfx_unc, genie_unc, reint_unc, detvar_unc])
-            bkg_sys_err_list = [tot_overlay_sys, 
-                                0, #No systematic error on the EXT sample
-                                hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_dirt_bkg_frac"]] #Don't have reweight or DetVar samples for dirt
-            bkg_err_list = [add_all_errors([bkg_stat_err_list[0],bkg_sys_err_list[0]]), #adding the sys and stat error in quadrature for each bkg type
-                            add_all_errors([bkg_stat_err_list[1],bkg_sys_err_list[1]]),
-                            add_all_errors([bkg_stat_err_list[2],bkg_sys_err_list[2]])]
-        if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == True):
-            sig_sys_err = hist_dict[HNL_mass]['Signal'].values()*Params["Flat_sig_frac"]
-            sig_err = add_all_errors([sig_stat_err,sig_sys_err])
-        if (Params["Stats_only"] == False) and (Params["Use_flat_sys_signal"] == False):
-            sig_detvar_err = sig_detvar_dict[HNL_mass]["Total_DetVar_uncertainty"].values()
-            sig_flux_err = hist_dict[HNL_mass]['Signal'].values()*Params["Flat_overlay_bkg_frac"]
-            sig_err = add_all_errors([sig_stat_err,sig_detvar_err,sig_flux_err]) #Adding stat, detvar and flux errors in quadrature
-        total_bkg_err = add_all_errors(bkg_err_list) #Now adding the errors of overlay, EXT and dirt in quadrature
-        BKG_ERR_dict[HNL_mass] = total_bkg_err
-        SIGNAL_ERR_dict[HNL_mass] = sig_err
-    return BKG_ERR_dict, SIGNAL_ERR_dict
-
-def Make_into_lists_OLD(Params, BKG_dict, SIGNAL_dict, BKG_ERR_dict, SIGNAL_ERR_dict):
-    
-    def remove_part_hist(hist_list, numbins):
-        length = len(hist_list)
-        slice_at = length - int(numbins)
-        if slice_at < 0:
-            print("Trying to use greater number of bins than available, using full dist.")
-            slice_at = 0
-        sliced_hist = hist_list[slice_at:]
-        return sliced_hist
-    
-    BKG_dict_FINAL, BKG_ERR_dict_FINAL, SIGNAL_dict_FINAL, SIGNAL_ERR_dict_FINAL = {}, {}, {}, {}
-    for HNL_mass in BKG_dict:
-        BKG = np.ndarray.tolist(BKG_dict[HNL_mass])
-        BKG_ERR = np.ndarray.tolist(BKG_ERR_dict[HNL_mass])
-        SIGNAL = np.ndarray.tolist(SIGNAL_dict[HNL_mass])
-        SIGNAL_ERR = np.ndarray.tolist(SIGNAL_ERR_dict[HNL_mass])
-        if Params["Use_part_only"] == True:
-            numbins = Params["Num_bins_for_calc"] #Number of bins in signal region to use for CLs calc
-            BKG=remove_part_hist(BKG, numbins)
-            BKG_ERR=remove_part_hist(BKG_ERR, numbins)
-            SIGNAL=remove_part_hist(SIGNAL, numbins)
-            SIGNAL_ERR=remove_part_hist(SIGNAL_ERR, numbins)
-            
-        BKG_dict_FINAL[HNL_mass] = BKG
-        BKG_ERR_dict_FINAL[HNL_mass] = BKG_ERR
-        SIGNAL_dict_FINAL[HNL_mass] = SIGNAL
-        SIGNAL_ERR_dict_FINAL[HNL_mass] = SIGNAL_ERR
-        
-    output_dict = {"BKG_dict":BKG_dict_FINAL, "BKG_ERR_dict":BKG_ERR_dict_FINAL, 
-                   "SIGNAL_dict":SIGNAL_dict_FINAL, "SIGNAL_ERR_dict":SIGNAL_ERR_dict_FINAL}
-        
-    return output_dict
 
 def remove_part_hist(hist_list, numbins):
         length = len(hist_list)
