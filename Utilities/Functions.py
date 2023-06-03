@@ -67,8 +67,8 @@ def new_create_sample_list(Params):
         Params["variables_MC"] = Variables.Preselection_vars_CRT_MC + Variables.event_vars
     elif Params["Load_truth_vars"]:
         Params["variables_string"] = "Truth_vars"
-        Params["variables"] = Variables.event_vars + Variables.event_vars
-        Params["variables_MC"] = Variables.event_vars + Variables.event_vars
+        Params["variables"] = Variables.event_vars + Variables.Truth_vars + Variables.multiplicity_vars + ["NeutrinoEnergy2", 'shr_theta_v', 'shr_phi_v', 'trk_theta_v', 'trk_phi_v']
+        Params["variables_MC"] = Variables.event_vars + Variables.Truth_vars + Variables.multiplicity_vars + ["NeutrinoEnergy2", 'shr_theta_v', 'shr_phi_v', 'trk_theta_v', 'trk_phi_v']
     else:
         Params["variables_string"] = "my_vars" #Standard variables I use
         Params["variables"] = Variables.Final_variable_list
