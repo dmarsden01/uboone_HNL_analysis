@@ -13,6 +13,14 @@ average_HNL_direction = [0.32, 0.74, -0.59] #Calculated from the weighted files 
 #------Pre-selection related constants-----#
 #------------------------------------------#
 
+#My rounded cuts
+my_max_x_cut=250
+my_min_x_cut=10
+my_max_y_cut=110
+my_min_y_cut=-110
+my_max_z_cut=1000
+my_min_z_cut=20
+
 #From Owen
 max_x_cut=253
 min_x_cut=9
@@ -20,6 +28,23 @@ max_y_cut=112
 min_y_cut=-112
 max_z_cut=1020
 min_z_cut=14
+
+#Krishcuts
+Krish_max_x_cut=245
+Krish_min_x_cut=9
+Krish_max_y_cut=106
+Krish_min_y_cut=-106
+Krish_max_z_cut=1030
+Krish_min_z_cut=5
+
+#PeLEE cuts
+PeLEE_max_x_cut=251
+PeLEE_min_x_cut=5
+PeLEE_max_y_cut=110
+PeLEE_min_y_cut=-110
+PeLEE_max_z_cut=986
+PeLEE_min_z_cut=20
+
 
 ##TPC
 TPCxlo=0
