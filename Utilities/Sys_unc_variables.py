@@ -65,6 +65,7 @@ run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] 
                 "n_showers": [0.16,0.189],
                 "flash_time": [0.112,0.127],
                 "nslice": [0.111,0.132],
+                "crtveto": [0.111,0.132], #Currently just copied nslice
                 "min_x": [0.132,0.138],
                 "max_x": [0.137,0.142],
                 "min_y": [0.139,0.143],
