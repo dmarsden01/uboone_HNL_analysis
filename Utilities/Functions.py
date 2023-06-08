@@ -5,6 +5,7 @@ import pandas as pd
 import uproot
 import uproot3
 import functools
+import xgboost
 
 import Utilities.Constants as Constants
 import Utilities.Variables_list as Variables
@@ -934,6 +935,148 @@ def create_sig_detsys_samples_list(Params): #Returns the list of samples to run 
     else: Params["logit_str"] = "standard"
     
     return samples, masses
+
+def Split_samples(Presel_overlay, signal_samples_dict, Presel_EXT, overlay_train_frac=0.7, signal_train_frac=0.7, EXT_train_frac=0.3):
+    """
+    Input pkl files and train_vs_test fractions.
+    Return the split samples.
+    """
+    overlay_train = Presel_overlay[:int(len(Presel_overlay)*overlay_train_frac)]
+    overlay_test = Presel_overlay[int(len(Presel_overlay)*overlay_train_frac):]
+    
+    EXT_train = Presel_EXT[:int(len(Presel_EXT)*EXT_train_frac)]
+    EXT_test = Presel_EXT[int(len(Presel_EXT)*EXT_train_frac):]
+    
+    signal_train_dict, signal_test_dict = {}, {}
+    
+    print(f"Length overlay train {len(overlay_train)}")
+    print(f"Length overlay test {len(overlay_test)}")
+    print(f"Length EXT train {len(EXT_train)}")
+    print(f"Length EXT test {len(EXT_test)}")
+    
+    for HNL_mass in signal_samples_dict:
+        signal_train_dict[HNL_mass] = signal_samples_dict[HNL_mass][:int(len(signal_samples_dict[HNL_mass])*signal_train_frac)]
+        signal_test_dict[HNL_mass] = signal_samples_dict[HNL_mass][int(len(signal_samples_dict[HNL_mass])*signal_train_frac):]
+        
+        print(f"Length {HNL_mass} train {len(signal_train_dict[HNL_mass])}")
+        print(f"Length {HNL_mass} test {len(signal_test_dict[HNL_mass])}")
+        
+    return overlay_train, overlay_test, EXT_train, EXT_test, signal_train_dict, signal_test_dict
+
+def Save_test_pkls(Params, loc_pkls, save_str, overlay_test, signal_test_dict, EXT_test = []):
+    """
+    Input Params, save_str, overlay test df, signal_test_dict, and EXT test sample if using.
+    Saves the dataframes as .pkl files.
+    """
+    start_str = loc_pkls
+    if Params["Load_pi0_signal"] == False: start_str+="BDT_Test_dfs/"
+    if Params["Load_pi0_signal"] == True: start_str+="BDT_Test_dfs/pi0_selection/"
+    
+    print(f"Pickling overlay test sample")
+    overlay_test.to_pickle(start_str+"Test_overlay_"+Params["Run"]+f"_flattened{save_str}.pkl")
+    
+    for HNL_mass in signal_test_dict:
+        print(f"Pickling {HNL_mass} test sample")
+        signal_test_dict[HNL_mass].to_pickle(start_str+f"Test_{HNL_mass}_"+Params["Run"]+f"_flattened{save_str}.pkl")
+        
+    if Params["EXT_in_training"] == True: 
+        print(f"Pickling beamoff test sample")
+        EXT_test.to_pickle(start_str+"Test_beamoff_"+Params["Run"]+f"_flattened{save_str}.pkl")
+        
+    if Params["EXT_in_training"] == False: print("Not saving beamoff test, as not using in training.") 
+        
+
+def Make_train_labels_and_dicts(Params, bdt_vars, overlay_train, EXT_train, signal_train_dict):
+    """
+    Input Params, bdt variables, training samples.
+    Return dicts of labels indicating if the event is signal (1) or bkg (0).
+    """
+    combined_dict, labels_dict = {}, {}
+    
+    for HNL_mass in signal_train_dict:
+        # labels_dict[HNL_mass] = [1]*len(signal_train_dict[HNL_mass][bdt_vars]) + [0]*len(overlay_train[bdt_vars])
+        combined_dict[HNL_mass] = pd.concat([signal_train_dict[HNL_mass][bdt_vars], overlay_train[bdt_vars]])
+        labels_dict[HNL_mass] = [1]*len(signal_train_dict[HNL_mass]) + [0]*len(overlay_train)
+        
+    bkg_train = overlay_train.copy()
+        
+    if Params["EXT_in_training"] == True:
+        for HNL_mass in signal_train_dict:
+            # labels_dict[HNL_mass] = labels_dict[HNL_mass] + [0]*len(EXT_train[bdt_vars])
+            combined_dict[HNL_mass] = pd.concat([combined_dict[HNL_mass][bdt_vars], EXT_train[bdt_vars]])
+            labels_dict[HNL_mass] = labels_dict[HNL_mass] + [0]*len(EXT_train)
+        bkg_train=pd.concat([overlay_train, EXT_train])
+    
+    return combined_dict, labels_dict, bkg_train
+
+def Prepare_for_xgb(Params, bdt_vars, combined_train_dict, signal_train_dict, bkg_train,  signal_test_dict, bkg_test,
+                    labels_train_dict, missing=-9999.0):
+    """
+    Input training dict, test dict, labels and xgboost parameters.
+    Returns the DMatrix forms of the dataframes for training.
+    """
+    xgb_train_bkg = xgboost.DMatrix(bkg_train[bdt_vars],label=[0]*len(bkg_train[bdt_vars]), missing=missing, feature_names=bdt_vars)
+    xgb_test_bkg = xgboost.DMatrix(bkg_test[bdt_vars], label=[0]*len(bkg_test[bdt_vars]), missing=missing, feature_names=bdt_vars)
+    
+    xgb_train_dict, xgb_sig_test_dict, xgb_sig_train_dict = {}, {}, {}
+    
+    for HNL_mass in signal_train_dict:
+        xgb_train_dict[HNL_mass] = xgboost.DMatrix(combined_train_dict[HNL_mass][bdt_vars], label=labels_train_dict[HNL_mass], 
+                                                   missing=missing, feature_names=bdt_vars)
+        
+        xgb_sig_test_dict[HNL_mass] = xgboost.DMatrix(signal_test_dict[HNL_mass][bdt_vars], label=[1]*len(signal_test_dict[HNL_mass][bdt_vars]), 
+                                                      missing=missing, feature_names=bdt_vars)
+        
+        xgb_sig_train_dict[HNL_mass] = xgboost.DMatrix(signal_train_dict[HNL_mass][bdt_vars],label=[1]*len(signal_train_dict[HNL_mass][bdt_vars]),
+                                                  missing=missing, feature_names=bdt_vars)
+        
+        
+    return xgb_train_dict, xgb_sig_train_dict, xgb_sig_test_dict, xgb_train_bkg, xgb_test_bkg
+        
+def Train_BDTs(Params, bdt_vars, BDT_name, xgb_train_dict, xgb_sig_test_dict, xgb_test_bkg, xgb_param, xgb_combined_test_dict,
+               progress, num_round = 150, early_stop=30, missing=-9999.0):
+    """
+    Input training dict, test dict, labels and xgboost parameters.
+    Saves the BDT models as .json files.
+    """
+    for HNL_mass in xgb_train_dict:
+        # watchlist = [(xgb_train_dict[HNL_mass], 'train'), (xgb_sig_test_dict[HNL_mass], 'test_sig'), (xgb_test_bkg,'test_bkg')] for logloss
+        watchlist = [(xgb_train_dict[HNL_mass], 'train'), (xgb_combined_test_dict[HNL_mass], 'test_combined')]
+        print(f"Training {HNL_mass} BDT" + "\n")
+        # bdt = xgboost.train(xgb_param, xgb_train_dict[HNL_mass], num_round, watchlist, evals_result=progress, verbose_eval=False)
+        
+        bdt = xgboost.train(params=xgb_param, dtrain=xgb_train_dict[HNL_mass], num_boost_round=num_round, evals=watchlist, 
+                            early_stopping_rounds=early_stop, evals_result=progress, verbose_eval=False)
+
+        if Params["Load_pi0_signal"] == False:
+            bdt.save_model("bdts/"+Params["Run"]+f"_{HNL_mass}{BDT_name}.json")
+        if Params["Load_pi0_signal"] == True:
+            bdt.save_model("bdts/pi0_selection/"+Params["Run"]+f"_{HNL_mass}{BDT_name}.json")
+            
+def Get_sample_norms(Params, sig_names, sig_train, overlay_train, EXT_train):
+    """
+    Input Params, signal names list and the training fractions used.
+    Returns a dict of sample_norms NOT WEIGHTED by event weights. 
+    """
+    SF_test_sig = 1.0/(1-sig_train)
+    SF_test_overlay = 1.0/(1-overlay_train)
+    SF_EXT = 1.0/(1-EXT_train)
+
+    if Params["Run"] == "run1": POT_scale_dict = Constants.run1_POT_scaling_dict
+    elif Params["Run"] == "run3": POT_scale_dict = Constants.run3_POT_scaling_dict
+        
+    overlay_scale = POT_scale_dict["overlay"]*SF_test_overlay
+    beamoff_scale = POT_scale_dict["beamoff"]*SF_EXT
+    dirtoverlay_scale = POT_scale_dict["dirtoverlay"] #dirt not used in training
+    
+    sample_norms={'overlay':overlay_scale,
+                  'dirtoverlay':dirtoverlay_scale,
+                  'beamoff':beamoff_scale}
+    
+    for HNL_mass in sig_names:
+        sample_norms[HNL_mass]=SF_test_sig
+            
+    return sample_norms
 
 def SaveToRoot(nbins,xlims,bkg_overlay,bkg_dirt,bkg_EXT,sig,data,fileName='test.root'):
     nBins = nbins
