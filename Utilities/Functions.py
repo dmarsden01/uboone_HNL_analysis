@@ -6,6 +6,7 @@ import uproot
 import uproot3
 import functools
 import xgboost
+import pickle
 
 import Utilities.Constants as Constants
 import Utilities.Variables_list as Variables
@@ -936,7 +937,9 @@ def create_sig_detsys_samples_list(Params): #Returns the list of samples to run 
     
     return samples, masses
 
-def Split_samples(Presel_overlay, signal_samples_dict, Presel_EXT, overlay_train_frac=0.7, signal_train_frac=0.7, EXT_train_frac=0.3):
+def Split_samples(Presel_overlay, signal_samples_dict, Presel_EXT, Presel_dirt, 
+                  overlay_train_frac=0.7, signal_train_frac=0.7, EXT_train_frac=0.3, dirt_train_frac=0.3,
+                  print_vals=True):
     """
     Input pkl files and train_vs_test fractions.
     Return the split samples.
@@ -947,23 +950,34 @@ def Split_samples(Presel_overlay, signal_samples_dict, Presel_EXT, overlay_train
     EXT_train = Presel_EXT[:int(len(Presel_EXT)*EXT_train_frac)]
     EXT_test = Presel_EXT[int(len(Presel_EXT)*EXT_train_frac):]
     
+    dirt_train = Presel_dirt[:int(len(Presel_dirt)*dirt_train_frac)]
+    dirt_test = Presel_dirt[int(len(Presel_dirt)*dirt_train_frac):]
+    
     signal_train_dict, signal_test_dict = {}, {}
     
-    print(f"Length overlay train {len(overlay_train)}")
-    print(f"Length overlay test {len(overlay_test)}")
-    print(f"Length EXT train {len(EXT_train)}")
-    print(f"Length EXT test {len(EXT_test)}")
+    if(print_vals):
+        print(f"Length overlay train {len(overlay_train)}")
+        print(f"Length overlay test {len(overlay_test)}")
+        print(f"Length EXT train {len(EXT_train)}")
+        print(f"Length EXT test {len(EXT_test)}")
+        print(f"Length dirt train {len(dirt_train)}")
+        print(f"Length dirt test {len(dirt_test)}")
     
     for HNL_mass in signal_samples_dict:
         signal_train_dict[HNL_mass] = signal_samples_dict[HNL_mass][:int(len(signal_samples_dict[HNL_mass])*signal_train_frac)]
         signal_test_dict[HNL_mass] = signal_samples_dict[HNL_mass][int(len(signal_samples_dict[HNL_mass])*signal_train_frac):]
+        if(dirt_train_frac):
+            print(f"Length {HNL_mass} train {len(signal_train_dict[HNL_mass])}")
+            print(f"Length {HNL_mass} test {len(signal_test_dict[HNL_mass])}")
+    
+    split_dict = {"overlay_train":overlay_train, "overlay_test":overlay_test,
+                  "signal_train_dict":signal_train_dict, "signal_test_dict":signal_test_dict,
+                  "EXT_train":EXT_train, "EXT_test":EXT_test,
+                  "dirt_train":dirt_train, "dirt_test":dirt_test}
         
-        print(f"Length {HNL_mass} train {len(signal_train_dict[HNL_mass])}")
-        print(f"Length {HNL_mass} test {len(signal_test_dict[HNL_mass])}")
-        
-    return overlay_train, overlay_test, EXT_train, EXT_test, signal_train_dict, signal_test_dict
+    return split_dict
 
-def Save_test_pkls(Params, loc_pkls, save_str, overlay_test, signal_test_dict, EXT_test = []):
+def Save_test_pkls(Params, loc_pkls, save_str, overlay_test, signal_test_dict, EXT_test = [], dirt_test = []):
     """
     Input Params, save_str, overlay test df, signal_test_dict, and EXT test sample if using.
     Saves the dataframes as .pkl files.
@@ -983,10 +997,15 @@ def Save_test_pkls(Params, loc_pkls, save_str, overlay_test, signal_test_dict, E
         print(f"Pickling beamoff test sample")
         EXT_test.to_pickle(start_str+"Test_beamoff_"+Params["Run"]+f"_flattened{save_str}.pkl")
         
+    if Params["dirt_in_training"] == True: 
+        print(f"Pickling dirt test sample")
+        dirt_test.to_pickle(start_str+"Test_dirtoverlay_"+Params["Run"]+f"_flattened{save_str}.pkl")
+        
     if Params["EXT_in_training"] == False: print("Not saving beamoff test, as not using in training.") 
+    if Params["dirt_in_training"] == False: print("Not saving dirt test, as not using in training.")
         
 
-def Make_train_labels_and_dicts(Params, bdt_vars, overlay_train, EXT_train, signal_train_dict):
+def Make_train_labels_and_dicts(Params, bdt_vars, overlay_train, EXT_train, dirt_train, signal_train_dict):
     """
     Input Params, bdt variables, training samples.
     Return dicts of labels indicating if the event is signal (1) or bkg (0).
@@ -1006,6 +1025,13 @@ def Make_train_labels_and_dicts(Params, bdt_vars, overlay_train, EXT_train, sign
             combined_dict[HNL_mass] = pd.concat([combined_dict[HNL_mass][bdt_vars], EXT_train[bdt_vars]])
             labels_dict[HNL_mass] = labels_dict[HNL_mass] + [0]*len(EXT_train)
         bkg_train=pd.concat([overlay_train, EXT_train])
+        
+    if Params["dirt_in_training"] == True:
+        for HNL_mass in signal_train_dict:
+            # labels_dict[HNL_mass] = labels_dict[HNL_mass] + [0]*len(EXT_train[bdt_vars])
+            combined_dict[HNL_mass] = pd.concat([combined_dict[HNL_mass][bdt_vars], dirt_train[bdt_vars]])
+            labels_dict[HNL_mass] = labels_dict[HNL_mass] + [0]*len(dirt_train)
+        bkg_train=pd.concat([bkg_train, dirt_train])
     
     return combined_dict, labels_dict, bkg_train
 
@@ -1044,16 +1070,18 @@ def Train_BDTs(Params, bdt_vars, BDT_name, xgb_train_dict, xgb_sig_test_dict, xg
         watchlist = [(xgb_train_dict[HNL_mass], 'train'), (xgb_combined_test_dict[HNL_mass], 'test_combined')]
         print(f"Training {HNL_mass} BDT" + "\n")
         # bdt = xgboost.train(xgb_param, xgb_train_dict[HNL_mass], num_round, watchlist, evals_result=progress, verbose_eval=False)
-        
+        individual_progress=dict()
         bdt = xgboost.train(params=xgb_param, dtrain=xgb_train_dict[HNL_mass], num_boost_round=num_round, evals=watchlist, 
-                            early_stopping_rounds=early_stop, evals_result=progress, verbose_eval=False)
-
-        if Params["Load_pi0_signal"] == False:
-            bdt.save_model("bdts/"+Params["Run"]+f"_{HNL_mass}{BDT_name}.json")
-        if Params["Load_pi0_signal"] == True:
-            bdt.save_model("bdts/pi0_selection/"+Params["Run"]+f"_{HNL_mass}{BDT_name}.json")
+                            early_stopping_rounds=early_stop, evals_result=individual_progress, verbose_eval=False)
+        progress[HNL_mass] = individual_progress
+        start_save_str = "bdts/"
+        if Params["Load_pi0_signal"] == True: start_save_str += "pi0_selection/"
+        
+        bdt.save_model(start_save_str+Params["Run"]+f"_{HNL_mass}{BDT_name}.json") #Saving with native function for compatibility, but doesn't save params used properly
+        pickle.dump(bdt, open(start_save_str+Params["Run"]+f"_{HNL_mass}{BDT_name}.pkl", "wb")) #DOES correctly save the params used in training
+        
             
-def Get_sample_norms(Params, sig_names, sig_train, overlay_train, EXT_train):
+def Get_sample_norms(Params, sig_names, sig_train, overlay_train, EXT_train, dirt_train):
     """
     Input Params, signal names list and the training fractions used.
     Returns a dict of sample_norms NOT WEIGHTED by event weights. 
@@ -1061,13 +1089,14 @@ def Get_sample_norms(Params, sig_names, sig_train, overlay_train, EXT_train):
     SF_test_sig = 1.0/(1-sig_train)
     SF_test_overlay = 1.0/(1-overlay_train)
     SF_EXT = 1.0/(1-EXT_train)
+    SF_dirt = 1.0/(1-dirt_train)
 
     if Params["Run"] == "run1": POT_scale_dict = Constants.run1_POT_scaling_dict
     elif Params["Run"] == "run3": POT_scale_dict = Constants.run3_POT_scaling_dict
         
     overlay_scale = POT_scale_dict["overlay"]*SF_test_overlay
     beamoff_scale = POT_scale_dict["beamoff"]*SF_EXT
-    dirtoverlay_scale = POT_scale_dict["dirtoverlay"] #dirt not used in training
+    dirtoverlay_scale = POT_scale_dict["dirtoverlay"]*SF_dirt
     
     sample_norms={'overlay':overlay_scale,
                   'dirtoverlay':dirtoverlay_scale,
