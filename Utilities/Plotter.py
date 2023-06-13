@@ -830,7 +830,7 @@ def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_si
 
 # def Plot_BDT_input():
 
-def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0):
+def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[], bins_cent_dict={}, bins_dict={}, bins_original={}, xticks=[],xticks_vals=[], figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, legsize=16, HNL_scale=1.0):
     
     if(HNL_masses==[]): raise Exception("Specify HNL sample masses")
     if(samples==[]): raise Exception("Specify samples")
@@ -838,18 +838,22 @@ def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[],
                                 'dirtoverlay':Constants.sample_colours['dirtoverlay'],
                                 'beamoff':Constants.sample_colours['beamoff'],
                                 'signal_test':Constants.sample_colours['signal']}
+    if(bins_cent_dict=={}): raise Exception("Specify bin centres")
+    if(bins_dict=={}): raise Exception("Specify bins")
     
-    if logy == True:
-        logscale="log"
-    elif logy == False:
-        logscale="linear"
-    
+    if logy == True: logscale="log"
+    elif logy == False: logscale="linear"
+        
+    plt.rcParams.update({'font.size': 30})
     for i, HNL_mass in enumerate(HNL_masses):
         plt.figure(figsize=figsize,facecolor='white')
         signal_name = signal_names[i]
+        
+        bins_cents=[bins_cent_dict[HNL_mass], bins_cent_dict[HNL_mass], bins_cent_dict[HNL_mass]]
+        
         if logit == False:
             bkg_scores=[samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],
-                   samples['beamoff'][f'BDT_output_{HNL_mass}MeV']]
+                        samples['beamoff'][f'BDT_output_{HNL_mass}MeV']]
         if logit == True:
             bkg_scores=[Functions.logit(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV']),
                         Functions.logit(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV']),
@@ -858,45 +862,47 @@ def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[],
         bkg_colors=[colours['overlay_test'],colours['dirtoverlay'],colours['beamoff']]
         labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
         
-        bins_list = np.histogram(bkg_scores[0],bins=bins,range=xlims)[1] #For mergebins part
-              
-        if(MergeBins): #remove bins with zero bkg prediction
-            totbkg=np.histogram(bkg_scores[0],bins=bins,range=xlims)[0]+np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]+np.histogram(bkg_scores[2],bins=bins,range=xlims)[0]
-            offbkg=np.histogram(bkg_scores[2],bins=bins,range=xlims)[0]
-            overlaybkg=np.histogram(bkg_scores[0],bins=bins,range=xlims)[0]
-            dirtbkg=np.histogram(bkg_scores[1],bins=bins,range=xlims)[0]
-            bins_new=[]
-            for i,bin_bkg in enumerate(totbkg):
-                if(overlaybkg[i]>1):
-                    bins_new.append(bins_list[i])
-
-            bins_new.append(bins_list[-1])
-
-            bins=bins_new
+        #Properly weight the histograms
+        overlay_vals = np.histogram(bkg_scores[0], weights=bkg_weights[0], bins=bins_original[HNL_mass])[0]
+        dirt_vals = np.histogram(bkg_scores[1], weights=bkg_weights[1], bins=bins_original[HNL_mass])[0]
+        beamoff_vals = np.histogram(bkg_scores[2], weights=bkg_weights[2], bins=bins_original[HNL_mass])[0]
+        bkg_vals = [overlay_vals, dirt_vals, beamoff_vals]
         
-        plot=plt.hist(bkg_scores,
-              label=labels,
-              range=xlims,bins=bins,
-              histtype="stepfilled",
-              stacked=True,linewidth=2,edgecolor="black",
-              weights=bkg_weights, color=bkg_colors, alpha=ALPHA)
+        hist_full_placeholder = np.histogram(bins_cents[0], weights=overlay_vals, bins=bins_original[HNL_mass])[0] #For making the error bars
+        
+        plot=plt.hist(bins_cents,
+                      label=labels,
+                      bins=bins_dict[HNL_mass],
+                      histtype="stepfilled",
+                      stacked=True,linewidth=2,edgecolor="black",
+                      weights=bkg_vals, color=bkg_colors, alpha=ALPHA)
+        
+        #add signal vals np.hist
+        
         if logit == False:
-            plt.hist(samples[signal_name][f'BDT_output_{HNL_mass}MeV'],weights=sample_norms[signal_name]*HNL_scale,bins=bins,range=xlims,
+            sig_vals = np.histogram(samples[signal_name][f'BDT_output_{HNL_mass}MeV'],
+                                    weights=sample_norms[signal_name], bins=bins_original[HNL_mass])[0]
+            plt.hist(bins_cent_dict[HNL_mass],weights=sig_vals*HNL_scale,bins=bins_dict[HNL_mass],range=[bins_dict[HNL_mass][0],bins_dict[HNL_mass][-1]],
                      lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
         if logit == True:
-            plt.hist(Functions.logit(samples[signal_name][f'BDT_output_{HNL_mass}MeV']),
-                     weights=sample_norms[signal_name]*HNL_scale,bins=bins,range=xlims,
+            sig_vals = np.histogram(Functions.logit(samples[signal_name][f'BDT_output_{HNL_mass}MeV']),
+                                    weights=sample_norms[signal_name], bins=bins_original[HNL_mass])[0]
+            plt.hist(bins_cent_dict[HNL_mass],
+                     weights=sig_vals*HNL_scale,bins=bins_dict[HNL_mass],range=[bins_dict[HNL_mass][0],bins_dict[HNL_mass][-1]],
                      lw=4, edgecolor=colours['signal_test'], label=f'HNL {HNL_mass} MeV', histtype="step")
-        plt.legend(loc=legloc,frameon=True)
+            
+        plt.legend(loc=legloc,frameon=True,fontsize=legsize)
         
+        if isinstance(xticks,dict):
+            plt.xticks(ticks=xticks_vals[HNL_mass], labels=xticks[HNL_mass])
         
+        if xlims!=[]: plt.xlim(xlims)
         plt.xlabel('BDT score', fontsize=30)
         plt.ylabel('Events', fontsize=30)
-        plt.rcParams.update({'font.size': 30})
         plt.yscale(logscale)
         if savefig == True:
-            plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(signal_name) + "MeV_" + logscale + save_str + ".pdf")
-            plt.savefig("plots/BDT_output/BDT_testing/" + Run + "_" + str(signal_name) + "MeV_" + logscale + save_str + ".png")
+            plt.savefig("plots/BDT_output/Full_dists/" + Run + "_" + str(signal_name) + "_"+ logscale + save_str + ".pdf")
+            plt.savefig("plots/BDT_output/Full_dists/" + Run + "_" + str(signal_name) + "_"+logscale + save_str + ".png")
         plt.show()
         
 def Plot_BDT_output_data(HNL_masses=[], samples=[], sample_norms=[], colours={}, ALPHA=1.0, xlims=[0,1.0],bins=20,figsize=[12,8], MergeBins=False, density=False, legloc="upper center",logy=True, savefig=False, save_str="", Run="_", logit=False, HNL_scale=1.0, dpi=100):

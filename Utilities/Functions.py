@@ -1107,6 +1107,33 @@ def Get_sample_norms(Params, sig_names, sig_train, overlay_train, EXT_train, dir
             
     return sample_norms
 
+def Get_weighted_sample_norms(Params, sample_dict, sig_names, sig_train, overlay_train, EXT_train, dirt_train):
+    """
+    Input Params, dict of sample dataframes with weights (if applicable) and the training fractions used.
+    Returns a dict of sample_norms. 
+    """
+    SF_test_sig = 1.0/(1-sig_train)
+    SF_test_overlay = 1.0/(1-overlay_train)
+    SF_EXT = 1.0/(1-EXT_train)
+    SF_dirt = 1.0/(1-dirt_train)
+
+    if Params["Run"] == "run1": POT_scale_dict = Constants.run1_POT_scaling_dict
+    elif Params["Run"] == "run3": POT_scale_dict = Constants.run3_POT_scaling_dict
+        
+    overlay_scale = POT_scale_dict["overlay"]*SF_test_overlay
+    beamoff_scale = POT_scale_dict["beamoff"]*SF_EXT
+    dirtoverlay_scale = POT_scale_dict["dirtoverlay"]*SF_dirt #dirt not used in training
+    
+    sample_norms={'overlay_test':np.array(sample_dict['overlay']["weight"]*overlay_scale),
+                  'dirtoverlay':np.array(sample_dict['dirtoverlay']["weight"]*dirtoverlay_scale),
+                  'beamoff':np.ones(len(sample_dict['beamoff']['n_pfps']))*beamoff_scale}
+    
+    for HNL_mass in sig_names:
+        signal_scale_list = np.ones(len(sample_dict[HNL_mass]['n_pfps']))*SF_test_sig
+        sample_norms[HNL_mass]=signal_scale_list
+            
+    return sample_norms
+
 def SaveToRoot(nbins,xlims,bkg_overlay,bkg_dirt,bkg_EXT,sig,data,fileName='test.root'):
     nBins = nbins
     binLimits = xlims
