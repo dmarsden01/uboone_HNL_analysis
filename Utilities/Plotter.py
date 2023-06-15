@@ -844,7 +844,7 @@ def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[],
     if logy == True: logscale="log"
     elif logy == False: logscale="linear"
         
-    plt.rcParams.update({'font.size': 30})
+    plt.rcParams.update({'font.size': 28})
     for i, HNL_mass in enumerate(HNL_masses):
         plt.figure(figsize=figsize,facecolor='white')
         signal_name = signal_names[i]
