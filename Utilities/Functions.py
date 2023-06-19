@@ -1377,10 +1377,22 @@ def remove_first_half_hist(hist_list):
     sliced_hist = hist_list[slice_at:]
     return sliced_hist
 
-def make_zero_bin_unc(hist_dict, SF_dict):
+def make_zero_bin_unc(hist_dict, SF_dict, Params):
+    """
+    Given dict of hists and scaling factors.
+    Returns the Poisson errors due to zero counts.
+    For signal it assumes there is no scaling before this step.
+    """
     zero_bins_errors = {}
     bkg_sample_names = ['bkg_overlay','bkg_EXT','bkg_dirt']
     conversion_dict = {'bkg_overlay':'overlay','bkg_EXT':'beamoff','bkg_dirt':'dirtoverlay'}
+    if Params["Load_lepton_hists"] == True: 
+        for HNL_mass in hist_dict:
+            conversion_dict.update({HNL_mass:f"{HNL_mass}_ee"})
+    if Params["Load_pi0_hists"] == True: 
+        for HNL_mass in hist_dict:
+            conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0"})
+    
     for HNL_mass in hist_dict:
         zero_bins_per_mass = {}
         for bkg in bkg_sample_names:
@@ -1390,7 +1402,16 @@ def make_zero_bin_unc(hist_dict, SF_dict):
                 if check_hist[i] == 0: 
                     one_sigma = 1.149 #This is the 1 sigma error on a poisson distribution for k=0
                     zero_bins_per_mass[bkg][i] = one_sigma*SF_dict[conversion_dict[bkg]]
+                    
+        zero_bins_per_mass["signal"] = np.zeros_like(hist_dict[HNL_mass]["signal"].values())
+        check_hist = hist_dict[HNL_mass]["signal"].values()
+        for i, val in enumerate(check_hist):
+            if check_hist[i] == 0: 
+                one_sigma = 1.149 #This is the 1 sigma error on a poisson distribution for k=0
+                zero_bins_per_mass["signal"][i] = one_sigma*SF_dict[conversion_dict[HNL_mass]]
+                
         zero_bins_errors[HNL_mass] = zero_bins_per_mass
+        
     return zero_bins_errors
 
 def Calculate_total_uncertainty(Params, hist_dict): #Takes the dictionary of all root files

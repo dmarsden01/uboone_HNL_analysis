@@ -119,17 +119,7 @@ Run1_pi0_DetVar_samples = []
 Run3_pi0_DetVar_samples = [150, 180, 220, 240,245] #200 is broken for some reason
 
 theta_mu_4 = 1e-4 #This is the same for *most* of the samples and was set in the production .fcls, now made a new dict because some are higher than this
-theta_mu_4_dict = {2:1e-1,
-                   10:1e-2,
-                   20:1e-4,
-                   50:1e-4,
-                   100:1e-4,
-                   150:1e-4,
-                   180:1e-4,
-                   200:1e-4,
-                   220:1e-4,
-                   240:1e-4,
-                   245:1e-4}
+theta_mu_4_dict = {2:1e-1, 10:1e-2, 20:1e-4, 50:1e-4, 100:1e-4, 150:1e-4, 180:1e-4, 200:1e-4, 220:1e-4, 240:1e-4, 245:1e-4}
 
 pi0_scaling_factor = 0.759 #For standard NuMI overlay files
 
@@ -147,63 +137,21 @@ DIRT_run3_scaling = 0.35 #NOT SURE where this comes from, apparently it is stand
 NuMI_KDAR_scaling_run1 = 8.0 #This comes from the discrepancy between numu flux from KDAR dump between Geant4 and MiniBooNE measurement. Taken from Owen's thesis
 NuMI_KDAR_scaling_run3 = 8.6
 
-run1_event_numbers = {2: 36059,
-                     10: 35032,
-                     20: 36815,
-                     50: 35518, 
-                     100: 36881, 
-                     150: 35254, #Fixed for new sample
-                     "2_ee": 36059,
-                     "10_ee": 35032,
-                     "20_ee": 36815,
-                     "50_ee": 35518, 
-                     "100_ee": 36881, 
-                     "150_ee": 35254,
-                     180: 36670, 
-                     200: 35325,
-                     220: 36849,
-                     240: 35400,
-                     245: 36877,
-                     "150_pi0": 30261,
-                     "180_pi0": 36452,
-                     "200_pi0": 35238,
-                     "220_pi0": 36868,
-                     "240_pi0": 35264,
-                     "245_pi0": 36698,
-                     '10_ee_dirac':34373,
-                     '100_ee_dirac':34114,
-                     "150_ee_dirac":31355,
-                     "150_pi0_dirac":35110,
-                     "200_pi0_dirac":33397,
-                     "245_pi0_dirac":34878,
+run1_event_numbers = {2: 36059, 10: 35032, 20: 36815, 50: 35518, 100: 36881, 150: 35254, #Fixed for new sample
+                     "2_ee": 36059, "10_ee": 35032, "20_ee": 36815, "50_ee": 35518, "100_ee": 36881, "150_ee": 35254,
+                     180: 36670, 200: 35325, 220: 36849, 240: 35400, 245: 36877,
+                     "150_pi0": 30261, "180_pi0": 36452, "200_pi0": 35238, "220_pi0": 36868, "240_pi0": 35264, "245_pi0": 36698,
+                     '10_ee_dirac':34373, '100_ee_dirac':34114, "150_ee_dirac":31355,
+                     "150_pi0_dirac":35110, "200_pi0_dirac":33397, "245_pi0_dirac":34878,
                      "overlay": 914729,
                      "dirtoverlay": 569506,
                      "beamoff": 904362,
                      "beamgood": 610496}
 
-run3_event_numbers = {2: 45159,
-                     10: 44463,
-                     20: 46022,
-                     50: 44579, 
-                     100: 45304, 
-                     150: 44031, #Fixed for new sample
-                     "2_ee": 45159,
-                     "10_ee": 44463,
-                     "20_ee": 46022,
-                     "50_ee": 44579, 
-                     "100_ee": 45304, 
-                     "150_ee": 44031,
-                     180: 46038, 
-                     200: 45003,
-                     220: 46093,
-                     240: 44894,
-                     245: 46114,
-                     "150_pi0": 45827,
-                     "180_pi0": 44811,
-                     "200_pi0": 43943,
-                     "220_pi0": 44503,
-                     "240_pi0": 45704,
-                     "245_pi0": 44073,
+run3_event_numbers = {2: 45159, 10: 44463, 20: 46022, 50: 44579, 100: 45304, 150: 44031, #Fixed for new sample
+                     "2_ee": 45159, "10_ee": 44463, "20_ee": 46022, "50_ee": 44579, "100_ee": 45304, "150_ee": 44031,
+                     180: 46038, 200: 45003, 220: 46093, 240: 44894, 245: 46114,
+                     "150_pi0": 45827, "180_pi0": 44811, "200_pi0": 43943, "220_pi0": 44503, "240_pi0": 45704, "245_pi0": 44073,
                      "overlay": 748702,
                      "dirtoverlay": 389264,
                      "beamoff": 3211097,
