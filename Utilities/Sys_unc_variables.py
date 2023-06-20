@@ -33,7 +33,9 @@ run1_Sys_unc = {"contained_fraction":[0.11, 0.145], #Entries are [PPFX, Genie] f
                 "min_y": [0.139,0.139],
                 "max_y": [0.139,0.138],
                 "min_z": [0.134,0.132],
-                "max_z": [0.137,0.137]} 
+                "max_z": [0.137,0.137],
+                "shr_tkfit_dedx_max": [0.139,0.157],
+                "topological_score": [0.137,0.136]} 
 
 run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] fractions, for overlay and with swtrig and nslice applied
                 "NeutrinoEnergy2": [0.113, 0.113], 
@@ -71,4 +73,6 @@ run3_Sys_unc = {"contained_fraction":[0.107, 0.148], #Entries are [PPFX, Genie] 
                 "min_y": [0.139,0.143],
                 "max_y": [0.137,0.142],
                 "min_z": [0.132,0.136],
-                "max_z": [0.135,0.14]} 
+                "max_z": [0.135,0.14],
+                "shr_tkfit_dedx_max": [0.139,0.157],
+                "topological_score": [0.137,0.136]} 
