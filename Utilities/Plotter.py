@@ -852,21 +852,22 @@ def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[],
         bins_cents=[bins_cent_dict[HNL_mass], bins_cent_dict[HNL_mass], bins_cent_dict[HNL_mass]]
         
         if logit == False:
-            bkg_scores=[samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'],
-                        samples['beamoff'][f'BDT_output_{HNL_mass}MeV']]
+            bkg_scores=[samples['beamoff'][f'BDT_output_{HNL_mass}MeV'],samples['overlay_test'][f'BDT_output_{HNL_mass}MeV'],
+                        samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV']]
         if logit == True:
-            bkg_scores=[Functions.logit(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV']),
-                        Functions.logit(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV']),
-                        Functions.logit(samples['beamoff'][f'BDT_output_{HNL_mass}MeV'])]
-        bkg_weights=[sample_norms['overlay_test'],sample_norms['dirtoverlay'],sample_norms['beamoff']]
-        bkg_colors=[colours['overlay_test'],colours['dirtoverlay'],colours['beamoff']]
-        labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
+            bkg_scores=[Functions.logit(samples['beamoff'][f'BDT_output_{HNL_mass}MeV']),
+                        Functions.logit(samples['overlay_test'][f'BDT_output_{HNL_mass}MeV']),
+                        Functions.logit(samples['dirtoverlay'][f'BDT_output_{HNL_mass}MeV'])]
+            
+        bkg_weights=[sample_norms['beamoff'],sample_norms['overlay_test'],sample_norms['dirtoverlay']]
+        bkg_colors=[colours['beamoff'],colours['overlay_test'],colours['dirtoverlay']]
+        labels=[f"Beam-Off",fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$"]
         
         #Properly weight the histograms
-        overlay_vals = np.histogram(bkg_scores[0], weights=bkg_weights[0], bins=bins_original[HNL_mass])[0]
-        dirt_vals = np.histogram(bkg_scores[1], weights=bkg_weights[1], bins=bins_original[HNL_mass])[0]
-        beamoff_vals = np.histogram(bkg_scores[2], weights=bkg_weights[2], bins=bins_original[HNL_mass])[0]
-        bkg_vals = [overlay_vals, dirt_vals, beamoff_vals]
+        overlay_vals = np.histogram(bkg_scores[1], weights=bkg_weights[1], bins=bins_original[HNL_mass])[0]
+        dirt_vals = np.histogram(bkg_scores[2], weights=bkg_weights[2], bins=bins_original[HNL_mass])[0]
+        beamoff_vals = np.histogram(bkg_scores[0], weights=bkg_weights[0], bins=bins_original[HNL_mass])[0]
+        bkg_vals = [beamoff_vals, overlay_vals, dirt_vals]
         
         hist_full_placeholder = np.histogram(bins_cents[0], weights=overlay_vals, bins=bins_original[HNL_mass])[0] #For making the error bars
         
@@ -896,8 +897,10 @@ def Plot_BDT_output(HNL_masses=[], signal_names=[], samples=[], sample_norms=[],
         if isinstance(xticks,dict):
             plt.xticks(ticks=xticks_vals[HNL_mass], labels=xticks[HNL_mass])
         
-        if xlims!=[]: plt.xlim(xlims)
-        plt.xlabel('BDT score', fontsize=30)
+        if isinstance(xlims, dict): plt.xlim(xlims[HNL_mass])
+        if (isinstance(xlims, list)) and (xlims!=[]): plt.xlim(xlims)
+        # plt.xlabel('BDT score', fontsize=30)
+        plt.xlabel(f'BDT Score '+r'($m_{\mathrm{HNL}}=$'+f'{HNL_mass} MeV)', fontsize=30)
         plt.ylabel('Events', fontsize=30)
         plt.yscale(logscale)
         if savefig == True:
