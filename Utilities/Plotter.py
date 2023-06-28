@@ -1085,6 +1085,145 @@ def Plot_BDT_output_systematics(HNL_masses=[], samples=[], colours={}, ALPHA=1.0
             plt.savefig("plots/BDT_output/" + Run + "_" + str(HNL_mass) + "_MeV_" + logscale + save_str + ".png")
         plt.show()
         
+def plot_bkg_total_unc_contributions(hist_dict, bkg_stat_frac, bins_dict, bins_cent_dict, xticks_dict, vals_dict,
+                                     Params, Unc_colors, Run, name_type, plot_total=False):
+    """
+    Using values in the .root file and the set Params.
+    Has to take bkg_stat_frac dict so that the bin numbers and zero bin errors match up.
+    Plots the bkg uncertainty fraction breakdown for each HNL mass.
+    """
+    uncs_frac_dict = {}
+    plt.rcParams.update({'font.size': 18})
+    save_fig = input("Do you want to save the figures? y/n ")
+    for HNL_mass in hist_dict:
+        plt.figure(figsize=(8,5),facecolor='white',dpi=100)
+        unc_fracs = {}
+
+        tot_bkg = hist_dict[HNL_mass]['bkg_overlay'].values()+hist_dict[HNL_mass]['bkg_dirt'].values()+hist_dict[HNL_mass]['bkg_EXT'].values()
+        
+        if Params["Use_part_only"] == True:
+            Num_bins=Params["Num_bins_for_calc"]
+            tot_bkg = tot_bkg[-1*(Num_bins):]
+        
+        overlay_stat_err=hist_dict[HNL_mass]['bkg_overlay'].errors()
+        dirt_stat_err=hist_dict[HNL_mass]['bkg_dirt'].errors()
+        EXT_stat_err=hist_dict[HNL_mass]['bkg_EXT'].errors()
+        
+#         bkg_stat_err_tot=Functions.add_all_errors([overlay_stat_err,dirt_stat_err,EXT_stat_err])
+        
+#         unc_fracs["Statistics"] = np.divide(bkg_stat_err_tot,tot_bkg)
+        unc_fracs["Statistics"] = np.array(bkg_stat_frac[HNL_mass])
+        
+        overlay_ppfx = hist_dict[HNL_mass]['ppfx_uncertainty_frac'].values()*hist_dict[HNL_mass]['bkg_overlay'].values()
+        overlay_genie = hist_dict[HNL_mass]['Genie_uncertainty_frac'].values()*hist_dict[HNL_mass]['bkg_overlay'].values()
+        overlay_reint = hist_dict[HNL_mass]['Reinteraction_uncertainty_frac'].values()*hist_dict[HNL_mass]['bkg_overlay'].values()
+        
+        overlay_detector = hist_dict[HNL_mass]['overlay_DetVar_uncertainty'].values()
+        dirt_norm = hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_bkg_dirt_frac"]
+        
+        if Params["Use_part_only"] == True:
+            Num_bins=Params["Num_bins_for_calc"]
+            overlay_ppfx = overlay_ppfx[-1*(Num_bins):]
+            overlay_genie = overlay_genie[-1*(Num_bins):]
+            overlay_reint = overlay_reint[-1*(Num_bins):]
+            overlay_detector = overlay_detector[-1*(Num_bins):]
+            dirt_norm = dirt_norm[-1*(Num_bins):]
+        
+        unc_fracs[r"$\nu$ Flux"] = np.divide(overlay_ppfx,tot_bkg)
+        unc_fracs[r"$\nu$ Cross-section"] = np.divide(overlay_genie,tot_bkg)
+        unc_fracs["Reinteractions"] = np.divide(overlay_reint,tot_bkg)
+            
+        unc_fracs["Detector"] = np.divide(overlay_detector,tot_bkg)
+        
+        unc_fracs["Dirt normalization"] = np.divide(dirt_norm,tot_bkg)
+        
+        all_fracs = []        
+        for unc in unc_fracs:
+            plt.hist(bins_cent_dict[HNL_mass], weights=unc_fracs[unc]*100, bins=bins_dict[HNL_mass], histtype="step",
+                     lw=2, label=unc, color = Unc_colors[unc])
+            all_fracs.append(unc_fracs[unc])
+            
+        tot_frac = Functions.add_all_errors(all_fracs)
+        
+        if plot_total==True:
+            plt.hist(bins_cent_dict[HNL_mass], weights=tot_frac*100, bins=bins_dict[HNL_mass], histtype="step",
+                     lw=2, label="Quadrature sum", color = Unc_colors["Total"], linestyle="dashed")
+            
+        # plt.xlabel('BDT score', fontsize=24)
+        plt.xlabel(f'BDT Score '+r'($m_{\mathrm{HNL}}=$'+f'{HNL_mass} MeV)', fontsize=24)
+        plt.ylabel('% Uncertainty', fontsize=24)
+        plt.ylim([0,70])
+        plt.legend(fontsize=14, loc="upper left")
+        
+        plt.xticks(ticks=vals_dict[HNL_mass], labels=xticks_dict[HNL_mass])
+        
+        plt.tight_layout()
+        
+        if save_fig == 'y':
+            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/Fractional_bkg_uncertainties_{Run}_{HNL_mass}_{name_type}.pdf")
+            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/Fractional_bkg_uncertainties_{Run}_{HNL_mass}_{name_type}.png")
+        plt.show()
+            
+        
+def plot_signal_total_unc_contributions(hist_dict, sig_stat_frac, bins_dict, bins_cent_dict, xticks_dict, vals_dict,
+                                        Params, Unc_colors, Run, name_type, KDAR_unc, plot_total=False):
+    """
+    Using values in the .root file and the set Params.
+    Has to take sig_stat_frac dict so that the bin numbers and zero bin errors match up.
+    Plots the signal uncertainty fraction breakdown for each HNL mass.
+    """
+    uncs_frac_dict = {}
+    plt.rcParams.update({'font.size': 16})
+    save_fig = input("Do you want to save the figures? y/n ")
+    for HNL_mass in hist_dict:
+        plt.figure(figsize=(8,5),facecolor='white',dpi=100)
+        
+        unc_fracs = {}
+        bins = hist_dict[HNL_mass]['signal'].to_numpy()[1]
+        bin_cents = (bins[:-1]+bins[1:])/2
+        tot_signal = hist_dict[HNL_mass]['signal'].values()
+        
+        # stat_err=hist_dict[HNL_mass]['signal'].errors()
+        
+        # unc_fracs["Statistics"] = np.divide(stat_err, tot_signal)
+        unc_fracs["Statistics"] = np.array(sig_stat_frac[HNL_mass])
+        # unc_fracs["Detector"] = np.divide(hist_dict[HNL_mass]['signal_DetVar_uncertainty'].values(), tot_signal)
+        unc_fracs["Detector"] = hist_dict[HNL_mass]['signal_DetVar_uncertainty_frac'].values()
+        
+        unc_fracs["Flux rate"] = np.ones(len(hist_dict[HNL_mass]['signal'].values()))*KDAR_unc 
+        
+        if Params["Use_part_only"] == True:
+            Num_bins=Params["Num_bins_for_calc"]
+            unc_fracs["Detector"] = unc_fracs["Detector"][-1*(Num_bins):]
+            unc_fracs["Flux rate"] = unc_fracs["Flux rate"][-1*(Num_bins):]
+        
+        all_fracs = []        
+        for unc in unc_fracs:
+            plt.hist(bins_cent_dict[HNL_mass], weights=unc_fracs[unc]*100, bins=bins_dict[HNL_mass], histtype="step",
+                     lw=2, label=unc, color = Unc_colors[unc])
+            all_fracs.append(unc_fracs[unc])
+            
+        tot_frac = Functions.add_all_errors(all_fracs)
+        
+        if plot_total==True:
+            plt.hist(bins_cent_dict[HNL_mass], weights=tot_frac*100, bins=bins_dict[HNL_mass], histtype="step",
+                     lw=2, label="Quadrature sum", color = Unc_colors["Total"], linestyle="dashed")
+        
+        # plt.xlabel('BDT score', fontsize=24)
+        plt.xlabel(f'BDT Score '+r'($m_{\mathrm{HNL}}=$'+f'{HNL_mass} MeV)', fontsize=24)
+        plt.ylabel('% Uncertainty', fontsize=24)
+        plt.ylim([0,70])
+        plt.legend(fontsize=14, loc="upper left")
+        
+        plt.xticks(ticks=vals_dict[HNL_mass], labels=xticks_dict[HNL_mass])
+        
+        plt.tight_layout()
+        
+        if save_fig == 'y':
+            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/Fractional_signal_uncertainties_{Run}_{HNL_mass}_{name_type}.pdf")
+            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/Fractional_signal_uncertainties_{Run}_{HNL_mass}_{name_type}.png")
+        plt.show()
+        
                     
 # def Plot_systematics():
     
