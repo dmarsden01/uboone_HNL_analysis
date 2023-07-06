@@ -1418,6 +1418,7 @@ def make_zero_bin_unc(hist_dict, SF_dict, Params):
         
     return zero_bins_errors
 
+
 def Calculate_total_uncertainty(Params, hist_dict): #Takes the dictionary of all root files
     BKG_ERR_dict, SIGNAL_ERR_dict = {}, {}
     bkg_sample_names = ['bkg_overlay','bkg_EXT','bkg_dirt']

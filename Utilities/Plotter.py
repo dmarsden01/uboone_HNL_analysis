@@ -358,7 +358,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         print("Reduced Chi squared is " + str(reduced_chi_squared))
             
     plt.ylabel(ylabel)
-    plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize})
+    if isinstance(legsize, int):
+        plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize})
     
     # plt.xlabel(xlabel)
     plt.xlim(xlims)
