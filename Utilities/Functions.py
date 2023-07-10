@@ -1928,9 +1928,10 @@ def New_Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_m
         print("Loading Dirac samples")
         for HNL_mass in HNL_masses:
             hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'run1_{HNL_mass}_' + filenames)
-            if Params_pyhf["Load_single_r1_file"] == True: hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass] 
-            else:
-                hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}_' + filenames)
+            # if Params_pyhf["Load_single_r1_file"] == True: 
+            hist_dict_run3[HNL_mass] = hist_dict_run1[HNL_mass] 
+            # else:
+                # hist_dict_run3[HNL_mass] = uproot.open(loc_hists+f'run3_{HNL_mass}_' + filenames) #No run3 samples for Dirac
             theta_dict[HNL_mass] = hist_dict_run1[HNL_mass]["theta"].values()[0]
 
     #list_of_dicts = [hist_dict_run1, hist_dict_run3] #Add runs 2, 4 when available, not using yet
