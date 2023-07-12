@@ -1119,7 +1119,7 @@ def plot_bkg_total_unc_contributions(hist_dict, bkg_stat_frac, bins_dict, bins_c
         overlay_genie = hist_dict[HNL_mass]['Genie_uncertainty_frac'].values()*hist_dict[HNL_mass]['bkg_overlay'].values()
         overlay_reint = hist_dict[HNL_mass]['Reinteraction_uncertainty_frac'].values()*hist_dict[HNL_mass]['bkg_overlay'].values()
         
-        overlay_detector = hist_dict[HNL_mass]['overlay_DetVar_uncertainty'].values()
+        overlay_detector = hist_dict[HNL_mass]['overlay_DetVar_uncertainty_frac'].values()*hist_dict[HNL_mass]['bkg_overlay'].values()
         dirt_norm = hist_dict[HNL_mass]['bkg_dirt'].values()*Params["Flat_bkg_dirt_frac"]
         
         if Params["Use_part_only"] == True:

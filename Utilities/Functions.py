@@ -1396,6 +1396,12 @@ def make_zero_bin_unc(hist_dict, SF_dict, Params):
     if Params["Load_pi0_hists"] == True: 
         for HNL_mass in hist_dict:
             conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0"})
+    if Params["Load_lepton_dirac"] == True: 
+        for HNL_mass in hist_dict:
+            conversion_dict.update({HNL_mass:f"{HNL_mass}_ee_dirac"})
+    if Params["Load_pi0_dirac"] == True: 
+        for HNL_mass in hist_dict:
+            conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0_dirac"})
     
     for HNL_mass in hist_dict:
         zero_bins_per_mass = {}
@@ -1926,6 +1932,7 @@ def New_Load_pyhf_files(filenames, Params_pyhf, location='Uncertainties/', HNL_m
             
     else:
         print("Loading Dirac samples")
+        if Params_pyhf["Load_pi0_dirac"] == True: loc_hists += "pi0/"
         for HNL_mass in HNL_masses:
             hist_dict_run1[HNL_mass] = uproot.open(loc_hists+f'run1_{HNL_mass}_' + filenames)
             # if Params_pyhf["Load_single_r1_file"] == True: 
