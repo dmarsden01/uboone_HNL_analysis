@@ -136,15 +136,17 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     plt.xlim(xlims)
     plt.tight_layout(rect=[0, 0, 1, 0.92])
     
-def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],dpi=100,MergeBins=False, 
-                                    discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0):
+def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],
+                                    dpi=100,MergeBins=False, 
+                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
     if(colours_sample=={}): colours_sample = {'overlay':Constants.sample_colours['overlay'],
                                               'dirtoverlay':Constants.sample_colours['dirtoverlay'],
                                               'beamoff':Constants.sample_colours['beamoff'],
-                                              'signal':Constants.sample_colours['signal']}
+                                              'signal':Constants.sample_colours['signal'],
+                                              'signal_pi0':Constants.sample_colours['signal_pi0']}
     if(order==[]): order = ["beamoff","overlay","dirtoverlay"] #From bottom to top in stack
     if(sys_dict=={} and CalcSys==True): raise Exception("Specify systematic errors dict")
     
@@ -153,6 +155,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     overlay=samples["overlay"]
     dirtoverlay=samples["dirtoverlay"]
     signal=samples["signal"]
+    signal_pi0=samples["signal_pi0"]
     
     if (dropdupes):
         beamgood=samples["beamgood"].drop_duplicates(subset=["run","evt","sub"])
@@ -160,27 +163,32 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         overlay=samples["overlay"].drop_duplicates(subset=["run","evt","sub"])
         dirtoverlay=samples["dirtoverlay"].drop_duplicates(subset=["run","evt","sub"])
         signal=samples["signal"].drop_duplicates(subset=["run","evt","sub"])
+        signal_pi0=samples["signal_pi0"].drop_duplicates(subset=["run","evt","sub"])
        
     var_Data=beamgood[variable]
     var_Offbeam=beamoff[variable]
     var_Overlay=overlay[variable]
     var_Dirt=dirtoverlay[variable]
     var_HNL=signal[variable]
+    var_HNL_pi0=signal_pi0[variable]
     
     variable_sample = {'overlay':var_Overlay,
                        'dirtoverlay':var_Dirt,
                        'beamoff':var_Offbeam,
-                       'signal':var_HNL}
+                       'signal':var_HNL, 
+                       'signal_pi0':var_HNL_pi0}
     
     weight_Offbeam=np.ones(len(var_Offbeam))*sample_norms["beamoff"]
     weight_Overlay=overlay["weight"]*sample_norms["overlay"]
     weight_Dirt=dirtoverlay["weight"]*sample_norms["dirtoverlay"]
     weight_signal=np.ones(len(var_HNL))*sample_norms["signal"]*HNLplotscale
+    weight_signal_pi0=np.ones(len(var_HNL_pi0))*sample_norms["signal_pi0"]*HNL_pi0_plotscale
     
     weights_sample = {'overlay':weight_Overlay,
                       'dirtoverlay':weight_Dirt,
                       'beamoff':weight_Offbeam,
-                      'signal':weight_signal}
+                      'signal':weight_signal,
+                      'signal_pi0':weight_signal_pi0}
     
     if xlims[0] == 0 and xlims[1] == 0: xlims = [min(var_Overlay),max(var_Overlay)]
     
@@ -267,14 +275,20 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     Dirtnum=sum(weight_Dirt)
     Overlaynum=sum(weight_Overlay) 
     HNL_num=sum(weight_signal)
+    HNL_pi0_num=sum(weight_signal_pi0)
     
-    if HNL_scale_label==False: HNL_label = f"{HNL_mass} MeV HNL"
+    if HNL_scale_label==False: 
+        HNL_label = f"{HNL_mass} MeV HNL"
+        HNL_pi0_label = f"{HNL_mass_pi0} MeV HNL"
     if HNL_scale_label==True: 
         theta = 1e-4
         theta_2 = theta**2
         new_theta_2 = np.sqrt(HNLplotscale)*theta_2
+        pi0_theta_2 = np.sqrt(HNL_pi0_plotscale)*theta_2
         theta_2_label = sci_notation(new_theta_2, decimal_digits=0)
+        theta_2_pi0_label = sci_notation(pi0_theta_2, decimal_digits=0)
         HNL_label = f"{HNL_mass} MeV HNL \n" + r"$|U_{\mu4}|^2$ = " + theta_2_label
+        HNL_pi0_label = f"{HNL_mass_pi0} MeV HNL \n" + r"$|U_{\mu4}|^2$ = " + theta_2_pi0_label
     
     if show_ev_nums==True:
         labels_sample = {'overlay':fr"In-Cryo $\nu$ ({Overlaynum:.1f})",
@@ -283,6 +297,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
                          'signal':f"{HNL_mass} MeV HNL ({HNL_num:.1f})"}
         # labels=[fr"In-Cryo $\nu$ ({Overlaynum:.1f})",fr"Out-Cryo $\nu$ ({Dirtnum:.1f})",f"Beam-Off ({Offbeamnum:.1f})"]
         sig_label = [f"{HNL_mass} MeV HNL ({HNL_num:.1f})"]
+        sig_pi0_label = [f"{HNL_mass} MeV HNL ({HNL_pi0_num:.1f})"]
         data_label = f"{Run} NuMI Data ({Datanum:.0f})"
     else:
         labels_sample = {'overlay':fr"In-Cryo $\nu$",
@@ -292,6 +307,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
                          #'signal':f"{HNL_mass} MeV HNL"}
         # labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
         sig_label = [HNL_label]
+        sig_pi0_label = [HNL_pi0_label]
         data_label = f"{Run} NuMI Data"
     
     plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
@@ -322,11 +338,18 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     
     bkg_stack=varis
     bkg_stack_w=weights
-    plt.hist(var_HNL,
-              label=sig_label,
-              range=xlims,bins=bins,
-              stacked=True,density=density,
-              weights= weight_signal,histtype="step",color=color,lw=4)
+    if(plot_ee):
+        plt.hist(var_HNL,
+                 label=sig_label,
+                 range=xlims,bins=bins,
+                 stacked=True,density=density,
+                 weights= weight_signal,histtype="step",color=color,lw=4)
+    if(plot_pi0):
+        plt.hist(var_HNL_pi0,
+                 label=sig_pi0_label,
+                 range=xlims,bins=bins,
+                 stacked=True,density=density,
+                 weights= weight_signal_pi0,histtype="step",color=colours_sample["signal_pi0"],lw=4)
     
     if cutline != 0.0:
         for line in cutline:

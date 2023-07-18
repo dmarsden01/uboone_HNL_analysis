@@ -309,7 +309,9 @@ run1_pi0_file_loc_dict = {"150_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues
 sample_colours = {'overlay':'mediumblue',
                   'dirtoverlay':'cornflowerblue',
                   'beamoff':'limegreen',
-                  'signal':'red'}
+                  'signal':'red',
+                  'signal_pi0':'gold'}
+                  # 'signal_pi0':'gold'}
 
 presel_var_names = {'nslice':"Neutrino slice", 'flash_time':"Flash time", 'nu_flashmatch_score':"Flashmatch score", 
                     'NeutrinoEnergy2':"Energy in slice", 'Fiducial_cut':"Fiducial volume", 
