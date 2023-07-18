@@ -138,7 +138,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     
 def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],
                                     dpi=100,MergeBins=False, 
-                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True):
+                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True, ncols=1):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -382,7 +382,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
             
     plt.ylabel(ylabel)
     if isinstance(legsize, int):
-        plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize})
+        plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols)
     
     # plt.xlabel(xlabel)
     plt.xlim(xlims)
@@ -644,7 +644,7 @@ def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weight
         
         
     plt.ylabel(ylabel)
-    plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize})
+    plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols)
     
     if chi_squared==True:
         Exp_hist = offbkg_weighted+overlaybkg_weighted+dirtbkg_weighted
