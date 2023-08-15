@@ -1296,6 +1296,12 @@ def add_hists_vals(hist_list):
         Total_hist += hist.values()
     return Total_hist
 
+def add_hists_vals_adj(hist_list):
+    Total_hist = np.zeros_like(hist_list[0])
+    for hist in hist_list:
+        Total_hist += hist
+    return Total_hist
+
 def add_all_errors(err_list): #adds in quadrature, assuming all hists are same shape
     Total_hist = np.zeros_like(err_list[0])
     for i in range(len(err_list[0])): #Looping over the bins
@@ -1381,7 +1387,7 @@ def remove_first_half_hist(hist_list):
     sliced_hist = hist_list[slice_at:]
     return sliced_hist
 
-def make_zero_bin_unc(hist_dict, SF_dict, Params):
+def make_zero_bin_unc(hist_dict, SF_dict, Params, adj_hists=False):
     """
     Given dict of hists and scaling factors.
     Returns the Poisson errors due to zero counts.
@@ -1390,18 +1396,24 @@ def make_zero_bin_unc(hist_dict, SF_dict, Params):
     zero_bins_errors = {}
     bkg_sample_names = ['bkg_overlay','bkg_EXT','bkg_dirt']
     conversion_dict = {'bkg_overlay':'overlay','bkg_EXT':'beamoff','bkg_dirt':'dirtoverlay'}
-    if Params["Load_lepton_hists"] == True: 
+    if adj_hists==False:
+        if Params["Load_lepton_hists"] == True: 
+            for HNL_mass in hist_dict:
+                conversion_dict.update({HNL_mass:f"{HNL_mass}_ee"})
+        if Params["Load_pi0_hists"] == True: 
+            for HNL_mass in hist_dict:
+                conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0"})
+        if Params["Load_lepton_dirac"] == True: 
+            for HNL_mass in hist_dict:
+                conversion_dict.update({HNL_mass:f"{HNL_mass}_ee_dirac"})
+        if Params["Load_pi0_dirac"] == True: 
+            for HNL_mass in hist_dict:
+                conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0_dirac"})
+    if adj_hists==True:
         for HNL_mass in hist_dict:
-            conversion_dict.update({HNL_mass:f"{HNL_mass}_ee"})
-    if Params["Load_pi0_hists"] == True: 
-        for HNL_mass in hist_dict:
-            conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0"})
-    if Params["Load_lepton_dirac"] == True: 
-        for HNL_mass in hist_dict:
-            conversion_dict.update({HNL_mass:f"{HNL_mass}_ee_dirac"})
-    if Params["Load_pi0_dirac"] == True: 
-        for HNL_mass in hist_dict:
-            conversion_dict.update({HNL_mass:f"{HNL_mass}_pi0_dirac"})
+            mass_label=HNL_mass.split("_")[0]
+            if Params["Load_lepton_hists"] == True: conversion_dict.update({HNL_mass:f"{mass_label}_ee"})
+            if Params["Load_pi0_hists"] == True: conversion_dict.update({HNL_mass:f"{mass_label}_pi0"})
     
     for HNL_mass in hist_dict:
         zero_bins_per_mass = {}
@@ -1467,6 +1479,7 @@ def Calculate_total_uncertainty(Params, hist_dict): #Takes the dictionary of all
         BKG_ERR_dict[HNL_mass] = total_bkg_err
         SIGNAL_ERR_dict[HNL_mass] = total_sig_err
     return BKG_ERR_dict, SIGNAL_ERR_dict
+
 
 def Full_calculate_total_uncertainty(Params, hist_dict, zero_bins_errs): #Takes the dictionary of all root files
     """
@@ -1556,6 +1569,94 @@ def Full_calculate_total_uncertainty(Params, hist_dict, zero_bins_errs): #Takes 
     
     return TOT_ERR_DICT
 
+def Adj_dict_Full_uncertainty(Params, hist_dict, zero_bins_errs): #Takes the dictionary of all root files
+    """
+    Given parameters, hist dict and zero bins error.
+    Returns a dict of all types of error and individual sample values for use in models.
+    """
+    OVERLAY_VALS, DIRT_VALS, BEAMOFF_VALS = {}, {}, {}
+    OVERLAY_STAT, DIRT_STAT, BEAMOFF_STAT = {}, {}, {}
+    TOT_BKG_ERR_dict, TOT_SIGNAL_ERR_dict = {}, {}
+    BKG_STAT_ERR_dict, SIGNAL_STAT_ERR_dict = {}, {}
+    BKG_DETVAR_ERR_dict, BKG_DIRT_ERR_dict, BKG_MULTISIM_ERR_dict = {}, {}, {}
+    BKG_SHAPESYS_ERR_dict, SIGNAL_SHAPESYS_ERR_dict = {}, {}
+    BKG_DETVAR_MULTISIM_dict = {}
+    SIGNAL_DETVAR_ERR_dict = {}
+    SIGNAL_NORMSYS_ERR_dict = {} #No normsys for this because currently background contributions are added together
+    bkg_sample_names = ['bkg_overlay','bkg_EXT','bkg_dirt']
+    overlay_sys_frac_names = ["ppfx_uncertainty_frac","Genie_uncertainty_frac","Reinteraction_uncertainty_frac","overlay_DetVar_uncertainty_frac"]
+    for HNL_mass in hist_dict:
+        bkg_stat_err_dict, bkg_sys_err_dict = {}, {} #Clean for each mass point
+        
+        OVERLAY_VALS[HNL_mass] = hist_dict[HNL_mass]['bkg_overlay']
+        DIRT_VALS[HNL_mass] = hist_dict[HNL_mass]['bkg_dirt']
+        BEAMOFF_VALS[HNL_mass] = hist_dict[HNL_mass]['bkg_EXT']
+        OVERLAY_STAT[HNL_mass] = np.add(hist_dict[HNL_mass]['bkg_overlay_stat'], zero_bins_errs[HNL_mass]['bkg_overlay'])
+        DIRT_STAT[HNL_mass] = np.add(hist_dict[HNL_mass]['bkg_dirt_stat'], zero_bins_errs[HNL_mass]['bkg_dirt'])
+        BEAMOFF_STAT[HNL_mass] = np.add(hist_dict[HNL_mass]['bkg_EXT_stat'], zero_bins_errs[HNL_mass]['bkg_EXT'])
+        
+        for name in bkg_sample_names:
+            bkg_stat_err_dict[name]=np.add(hist_dict[HNL_mass][name], zero_bins_errs[HNL_mass][name])
+        sig_stat_err = np.add(hist_dict[HNL_mass]['signal_stat'], zero_bins_errs[HNL_mass]['signal'])
+        if Params["Stats_only"] == True: #Set all systematic errors to zero
+            for name in bkg_sample_names:
+                bkg_sys_err_dict[name] = np.zeros_like(hist_dict[HNL_mass][name])
+            sig_sys_err =  np.zeros_like(hist_dict[HNL_mass]['signal'])
+        elif Params["Use_flat_sys"] == True:
+            for name in bkg_sample_names:
+                bkg_sys_err_dict[name] = hist_dict[HNL_mass][name].values()*Params["Flat_"+name+"_frac"]
+            sig_flux_err = hist_dict[HNL_mass]['signal']*Params["Signal_flux_error"]
+            sig_detvar_err = hist_dict[HNL_mass]['signal']*Params["Flat_sig_detvar"]
+            sig_sys_err = np.sqrt(sig_flux_err**2 + sig_detvar_err**2)
+        #This is using the fully evaluated uncertainties
+        elif Params["Use_flat_sys"] == False: 
+            overlay_sys_dict = {}
+            for sys in overlay_sys_frac_names:
+                overlay_sys_dict[sys] = hist_dict[HNL_mass][sys]*hist_dict[HNL_mass]['bkg_overlay']
+            bkg_sys_err_dict['bkg_overlay'] = add_all_errors_dict(overlay_sys_dict)
+            bkg_sys_err_dict['bkg_EXT'] = np.zeros_like(hist_dict[HNL_mass]['bkg_EXT_stat'])
+            bkg_sys_err_dict['bkg_dirt'] = hist_dict[HNL_mass]['bkg_dirt']*Params["Flat_bkg_dirt_frac"]
+            
+            # sig_detvar_err = hist_dict[HNL_mass]["signal_DetVar_uncertainty"].values()
+            sig_detvar_err = hist_dict[HNL_mass]["signal_DetVar_uncertainty_frac"]*hist_dict[HNL_mass]['signal']
+            sig_flux_err = hist_dict[HNL_mass]['signal']*Params["Signal_flux_error"]
+            sig_sys_err = add_all_errors([sig_detvar_err,sig_flux_err])
+            
+        #Evaluating final stat+sys errors    
+        bkg_stat_plus_sys_dict={}
+        for name in bkg_sample_names:
+            bkg_stat_plus_sys_dict[name]=add_all_errors([bkg_stat_err_dict[name],bkg_sys_err_dict[name]]) 
+        
+        total_bkg_err = add_all_errors_dict(bkg_stat_plus_sys_dict) #Now adding the errors of overlay, EXT and dirt in quadrature
+        total_sig_err = add_all_errors([sig_stat_err,sig_sys_err])
+        
+        TOT_BKG_ERR_dict[HNL_mass] = total_bkg_err
+        TOT_SIGNAL_ERR_dict[HNL_mass] = total_sig_err
+        
+        BKG_STAT_ERR_dict[HNL_mass] = add_all_errors_dict(bkg_stat_err_dict)
+        BKG_SHAPESYS_ERR_dict[HNL_mass] = add_all_errors_dict(bkg_sys_err_dict)
+        BKG_DETVAR_ERR_dict[HNL_mass] = overlay_sys_dict["overlay_DetVar_uncertainty_frac"]
+        BKG_DIRT_ERR_dict[HNL_mass] = bkg_sys_err_dict['bkg_dirt']
+        BKG_MULTISIM_ERR_dict[HNL_mass] = add_all_errors([overlay_sys_dict["ppfx_uncertainty_frac"],
+                                                          overlay_sys_dict["Genie_uncertainty_frac"],
+                                                          overlay_sys_dict["Reinteraction_uncertainty_frac"]])
+        BKG_DETVAR_MULTISIM_dict[HNL_mass] = add_all_errors([BKG_DETVAR_ERR_dict[HNL_mass], BKG_MULTISIM_ERR_dict[HNL_mass]])
+        
+        SIGNAL_STAT_ERR_dict[HNL_mass] = sig_stat_err
+        SIGNAL_SHAPESYS_ERR_dict[HNL_mass] = sig_detvar_err
+        SIGNAL_DETVAR_ERR_dict[HNL_mass] = sig_detvar_err
+    TOT_ERR_DICT = {}
+    TOT_ERR_DICT["OVERLAY_VALS"], TOT_ERR_DICT["DIRT_VALS"], TOT_ERR_DICT["BEAMOFF_VALS"] = OVERLAY_VALS, DIRT_VALS, BEAMOFF_VALS
+    TOT_ERR_DICT["OVERLAY_STAT"], TOT_ERR_DICT["DIRT_STAT"], TOT_ERR_DICT["BEAMOFF_STAT"] = OVERLAY_STAT, DIRT_STAT, BEAMOFF_STAT
+    TOT_ERR_DICT["TOT_BKG_ERR"], TOT_ERR_DICT["TOT_SIGNAL_ERR"] = TOT_BKG_ERR_dict, TOT_SIGNAL_ERR_dict
+    TOT_ERR_DICT["BKG_STAT"], TOT_ERR_DICT["BKG_SHAPESYS"] = BKG_STAT_ERR_dict, BKG_SHAPESYS_ERR_dict
+    TOT_ERR_DICT["BKG_DETVAR"], TOT_ERR_DICT["BKG_DIRT"], TOT_ERR_DICT["BKG_MULTISIM"] = BKG_DETVAR_ERR_dict, BKG_DIRT_ERR_dict, BKG_MULTISIM_ERR_dict
+    TOT_ERR_DICT["BKG_DETVAR_MULTISIM"] = BKG_DETVAR_MULTISIM_dict
+    TOT_ERR_DICT["SIGNAL_STAT"], TOT_ERR_DICT["SIGNAL_SHAPESYS"] = SIGNAL_STAT_ERR_dict, SIGNAL_SHAPESYS_ERR_dict
+    TOT_ERR_DICT["SIGNAL_DETVAR"] = SIGNAL_DETVAR_ERR_dict
+    
+    return TOT_ERR_DICT
+
 def Add_bkg_hists_make_signal(hist_dict):
     """
     Input dict of histgrams.
@@ -1571,6 +1672,21 @@ def Add_bkg_hists_make_signal(hist_dict):
  
     return BKG_dict, SIGNAL_dict
 
+def Add_bkg_hists_adj(hist_dict):
+    """
+    Input adjacent models dict.
+    Returns dicts of total BKG and total signal.
+    """
+    BKG_dict, SIGNAL_dict = {}, {}
+    for HNL_mass in hist_dict:
+        bkg_hists = [hist_dict[HNL_mass]['bkg_EXT'], hist_dict[HNL_mass]['bkg_overlay'], hist_dict[HNL_mass]['bkg_dirt']]
+        
+        total_bkg = add_hists_vals_adj(bkg_hists)
+        BKG_dict[HNL_mass] = total_bkg
+        SIGNAL_dict[HNL_mass] = hist_dict[HNL_mass]['signal']
+ 
+    return BKG_dict, SIGNAL_dict
+
 def add_data(Total_dict, hists, numbins):
     """
     Given total dict, hist dict and number of bins.
@@ -1580,6 +1696,31 @@ def add_data(Total_dict, hists, numbins):
         hist_placeholder = list(hists[HNL_mass]["data"].values())
         hist_data = remove_part_hist(hist_placeholder, numbins)
         Total_dict[HNL_mass]["data"]=hist_data
+    return Total_dict
+
+def add_data_adj(Total_dict, hists, numbins):
+    """
+    Given total dict, hist dict and number of bins.
+    Returns total dict with data added for a single run.
+    """
+    for HNL_mass in Total_dict:
+        hist_placeholder = list(hists[HNL_mass]["data"])
+        hist_data = remove_part_hist(hist_placeholder, numbins)
+        Total_dict[HNL_mass]["data"]=hist_data
+    return Total_dict
+
+def add_data_appended_adj(Total_dict, hists_r1, hists_r3, numbins):
+    """
+    Given Total dict, r1 and r3 dicts and number of bins.
+    Returns new Total dict with data added for both runs. 
+    """
+    for HNL_mass in Total_dict:
+        r1_hist_placeholder = list(hists_r1[HNL_mass]["data"])
+        r3_hist_placeholder = list(hists_r3[HNL_mass]["data"])
+        r1_hist = remove_part_hist(r1_hist_placeholder, numbins)
+        r3_hist = remove_part_hist(r3_hist_placeholder, numbins)
+        appended = r1_hist+r3_hist
+        Total_dict[HNL_mass]["data"]=appended
     return Total_dict
 
 def add_data_appended(Total_dict, hists_r1, hists_r3, numbins):
