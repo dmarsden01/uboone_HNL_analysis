@@ -331,7 +331,7 @@ variable_names_dict = {'nslice':"Neutrino slice", #Should contain all names for 
                        'n_tracks':"Track multiplicity",
                        'n_showers':"Shower multiplicity",
                        'trk_energy':"Highest track energy [GeV]",
-                       'shr_theta_v':"Shower theta [radians]",
+                       'shr_theta_v':r"Shower $\theta$ [radians]",
                        'contained_sps_ratio':"Contained space points fraction",
                        'shr_px_v':"Shower x-momentum fraction",
                        'trk_end_x_v':"Track end x [cm]",

@@ -138,7 +138,7 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     
 def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],
                                     dpi=100,MergeBins=False, 
-                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True, ncols=1):
+                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True, ncols=1, title_name=None):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -255,6 +255,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     fig,ax = plt.subplots(nrows=2, ncols=1, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=figsize,dpi=dpi)
     
     plt.sca(ax[0])
+    
+    if isinstance(title_name, str): plt.title(title_name, fontsize=24)
         
     if(discrete):
         bins = np.arange(xlims[0], xlims[1] + 1.5) - 0.5
@@ -380,7 +382,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         print("Chi squared is " + str(chi_square_val))
         print("Reduced Chi squared is " + str(reduced_chi_squared))
             
-    plt.ylabel(ylabel)
+    # plt.ylabel(ylabel)
+    if isinstance(ylabel, str): plt.ylabel(ylabel)
     if isinstance(legsize, int):
         plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols)
     
@@ -415,7 +418,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
        
     # plt.errorbar(bin_center,rat,yerr=rat_err,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data") #Had this before, but wrong I think
     plt.errorbar(bin_center,rat,yerr=fracer_data,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data")
-    plt.ylabel("Data/MC")
+    if isinstance(ylabel, str): plt.ylabel("Data/MC")
+    # plt.ylabel("Data/MC")
     plt.axhline(1,ls='-',color='black')
     plt.axhline(1.1,ls='--',color='grey')
     plt.axhline(0.9,ls='--',color='grey')
@@ -435,6 +439,9 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         plt.savefig(savename+".png")
     if display == False:
         plt.close()
+        
+    if chi_squared==True: return reduced_chi_squared
+
         
 def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weights_full=[], query="nslice>-1", xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],
                             dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False,
