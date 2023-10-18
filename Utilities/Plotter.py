@@ -138,7 +138,8 @@ def Plot_preselection_variable(variable, samples=[], sample_norms=[], xlabel=[],
     
 def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabel=[],xlims=[0,0],bins=40,figsize=[10,10],
                                     dpi=100,MergeBins=False, 
-                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True, ncols=1, title_name=None):
+                                    discrete=False, HNL_mass = 0, HNL_mass_pi0=0, HNLplotscale=100000, HNL_pi0_plotscale=10000, density=False,legloc="best",logy = False, cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False, hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False, savename="test", HNL_scale_label=False, dropdupes=False, err_print=False, Run="", chi_squared=False, dirt_frac_error=1.0, plot_ee=True, plot_pi0=True, ncols=1, title_name=None, sub_plot_range=None, sub_ylabel=None, textpos=None, plot_text=None, 
+                                   textsize=16):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -310,7 +311,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         # labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
         sig_label = [HNL_label]
         sig_pi0_label = [HNL_pi0_label]
-        data_label = f"{Run} NuMI Data"
+        # data_label = f"{Run} NuMI Data"
+        data_label = f"Data"
     
     plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
 
@@ -391,6 +393,10 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     plt.xlim(xlims)
     if ylimit != None: plt.ylim(0,ylimit)
     
+    if plot_text != None:
+        plt.text(textpos[0],textpos[1], plot_text, fontsize=textsize)
+    # plt.text(textpos[0],textpos[1], plot_text)
+    
     #---Sub-plot----#
     plt.sca(ax[1])
     
@@ -418,13 +424,14 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
        
     # plt.errorbar(bin_center,rat,yerr=rat_err,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data") #Had this before, but wrong I think
     plt.errorbar(bin_center,rat,yerr=fracer_data,fmt='.',color='black',lw=3,capsize=3,elinewidth=1,label="data")
-    if isinstance(ylabel, str): plt.ylabel("Data/MC")
-    # plt.ylabel("Data/MC")
+    if isinstance(sub_ylabel, str): plt.ylabel(sub_ylabel)
+    else: plt.ylabel("Data/MC")
     plt.axhline(1,ls='-',color='black')
     plt.axhline(1.1,ls='--',color='grey')
     plt.axhline(0.9,ls='--',color='grey')
     ylim = max(abs(np.nan_to_num(rat)))*1.1
-    plt.ylim(0.7,1.3)
+    if sub_plot_range != None: plt.ylim(1-sub_plot_range,1+sub_plot_range)
+    else: plt.ylim(0.7,1.3)
     # plt.ylim(0.9,1.1)
     plt.xlim(xlims)
     if xticks != []:
@@ -447,7 +454,7 @@ def Plot_preselection_query(variable, samples=[], sample_norms=[], sample_weight
                             dpi=100,MergeBins=False, discrete=False, HNL_mass = 0, HNLplotscale=100000,density=False,legloc="best",logy = False,
                             cutline = 0.0, show_ev_nums=False, CalcSys=False, xticks=[], colours_sample={}, order=[], sys_dict={}, centre_bins=False,
                             hatch=False, ylabel="Events", Frame=True, arrow_place=[], ylimit=None, legsize=22, display=True, savefig=False,
-                            savename="test", HNL_scale_label=False, title_name = "", Run="", chi_squared=True, dirt_frac_error=1.0):
+                            savename="test", HNL_scale_label=False, title_name = "", Run="", chi_squared=True, dirt_frac_error=1.0, ncols=1):
     
     if(samples==[]): raise Exception("Specify samples dict") 
     if(xlabel==[]): xlabel=variable
@@ -857,6 +864,42 @@ def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_si
         plt.savefig("plots/Preselection_efficiencies/Efficiency_wrt_previous_"+Params["Run"]+ f"_{weighted_name}.png")
         plt.savefig("plots/Preselection_efficiencies/Efficiency_wrt_previous_"+Params["Run"]+ f"_{weighted_name}.pdf")
         
+def Plot_preselection_numbers(Params, Preselection_dict, Efficiency_dict, log=True):
+    """
+    Input Params, number dict and signal efficiency band dicts.
+    Plots and, if savefig==True, will save the efficiency plot.
+    """
+    var_names = []
+    for var in Preselection_dict.keys():
+        var_names.append(Constants.presel_var_names[var])
+    
+    plt.figure(figsize=[10,10])
+    plotting_effic_dict = {'overlay':Efficiency_dict['overlay'], 'dirtoverlay':Efficiency_dict['dirtoverlay'],
+                          'beamoff':Efficiency_dict['beamoff']}
+    label_effic_dict = {'overlay':fr"In-Cryo $\nu$", 'dirtoverlay':fr"Out-Cryo $\nu$",
+                          'beamoff':f"Beam-Off"}
+    plotting_effic_colours = Constants.sample_colours
+    
+    if log == True: logscale="log"
+    elif log == False: logscale="linear"
+    
+    for effic in plotting_effic_dict:
+        plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Efficiency_dict[effic],label=label_effic_dict[effic],color=plotting_effic_colours[effic],lw=4,markersize=15)
+
+    plt.ylabel("Events Selected")
+    plt.xticks(np.array(range(1, len(Efficiency_dict['overlay'])+1)),["Full sample"]+var_names,rotation=80)
+    plt.yscale(logscale)
+    plt.legend(loc='lower left',prop={'size': 22})
+
+    plt.tight_layout()
+    
+    save_fig = input("Do you want to save the figure? y/n ")
+    if Params["FLATTEN"] == False: weighted_name = "_non_weighted_FINAL"
+    if Params["FLATTEN"] == True: weighted_name = "_weighted_BOTH_FINAL"
+    if save_fig == 'y':
+        plt.savefig("plots/Preselection_efficiencies/Preselection_numbers_"+Params["Run"]+ f"_{logscale}{weighted_name}.png")
+        plt.savefig("plots/Preselection_efficiencies/Preselection_numbers_"+Params["Run"]+ f"_{logscale}{weighted_name}.pdf")
+        
 # def Presel_efficiency():
 
 # def Plot_BDT_input():
@@ -1161,12 +1204,12 @@ def plot_bkg_total_unc_contributions(hist_dict, bkg_stat_frac, bins_dict, bins_c
             dirt_norm = dirt_norm[-1*(Num_bins):]
         
         unc_fracs[r"$\nu$ Flux"] = np.divide(overlay_ppfx,tot_bkg)
-        unc_fracs[r"$\nu$ Cross-section"] = np.divide(overlay_genie,tot_bkg)
+        unc_fracs[r"$\nu$ Cross Section"] = np.divide(overlay_genie,tot_bkg)
         unc_fracs["Reinteractions"] = np.divide(overlay_reint,tot_bkg)
             
-        unc_fracs["Detector"] = np.divide(overlay_detector,tot_bkg)
+        unc_fracs["Detector Modelling"] = np.divide(overlay_detector,tot_bkg) #Was just Detector
         
-        unc_fracs["Dirt normalization"] = np.divide(dirt_norm,tot_bkg)
+        unc_fracs[r"Out-Cryo $\nu$ Normalisation"] = np.divide(dirt_norm,tot_bkg) #Was jut Dirt normalization
         
         all_fracs = []        
         for unc in unc_fracs:
@@ -1178,12 +1221,13 @@ def plot_bkg_total_unc_contributions(hist_dict, bkg_stat_frac, bins_dict, bins_c
         
         if plot_total==True:
             plt.hist(bins_cent_dict[HNL_mass], weights=tot_frac*100, bins=bins_dict[HNL_mass], histtype="step",
-                     lw=2, label="Quadrature sum", color = Unc_colors["Total"], linestyle="dashed")
+                     lw=2, label="Quadrature Sum", color = Unc_colors["Total"], linestyle="dashed")
             
         # plt.xlabel('BDT score', fontsize=24)
         plt.xlabel(f'BDT Score '+r'($m_{\mathrm{HNL}}=$'+f'{HNL_mass} MeV)', fontsize=24)
         plt.ylabel('% Uncertainty', fontsize=24)
-        plt.ylim([0,70])
+        if HNL_mass == 20 and Run == "run3": plt.ylim([0,80])
+        else: plt.ylim([0,70]) #standard
         plt.legend(fontsize=14, loc="upper left")
         
         plt.xticks(ticks=vals_dict[HNL_mass], labels=xticks_dict[HNL_mass])
@@ -1219,14 +1263,14 @@ def plot_signal_total_unc_contributions(hist_dict, sig_stat_frac, bins_dict, bin
         # unc_fracs["Statistics"] = np.divide(stat_err, tot_signal)
         unc_fracs["Statistics"] = np.array(sig_stat_frac[HNL_mass])
         # unc_fracs["Detector"] = np.divide(hist_dict[HNL_mass]['signal_DetVar_uncertainty'].values(), tot_signal)
-        unc_fracs["Detector"] = hist_dict[HNL_mass]['signal_DetVar_uncertainty_frac'].values()
+        unc_fracs["Detector Modelling"] = hist_dict[HNL_mass]['signal_DetVar_uncertainty_frac'].values()
         
-        unc_fracs["Flux rate"] = np.ones(len(hist_dict[HNL_mass]['signal'].values()))*KDAR_unc 
+        unc_fracs["Flux Rate"] = np.ones(len(hist_dict[HNL_mass]['signal'].values()))*KDAR_unc 
         
         if Params["Use_part_only"] == True:
             Num_bins=Params["Num_bins_for_calc"]
-            unc_fracs["Detector"] = unc_fracs["Detector"][-1*(Num_bins):]
-            unc_fracs["Flux rate"] = unc_fracs["Flux rate"][-1*(Num_bins):]
+            unc_fracs["Detector Modelling"] = unc_fracs["Detector Modelling"][-1*(Num_bins):]
+            unc_fracs["Flux Rate"] = unc_fracs["Flux Rate"][-1*(Num_bins):]
         
         all_fracs = []        
         for unc in unc_fracs:
@@ -1238,7 +1282,7 @@ def plot_signal_total_unc_contributions(hist_dict, sig_stat_frac, bins_dict, bin
         
         if plot_total==True:
             plt.hist(bins_cent_dict[HNL_mass], weights=tot_frac*100, bins=bins_dict[HNL_mass], histtype="step",
-                     lw=2, label="Quadrature sum", color = Unc_colors["Total"], linestyle="dashed")
+                     lw=2, label="Quadrature Sum", color = Unc_colors["Total"], linestyle="dashed")
         
         # plt.xlabel('BDT score', fontsize=24)
         plt.xlabel(f'BDT Score '+r'($m_{\mathrm{HNL}}=$'+f'{HNL_mass} MeV)', fontsize=24)
@@ -1251,8 +1295,8 @@ def plot_signal_total_unc_contributions(hist_dict, sig_stat_frac, bins_dict, bin
         plt.tight_layout()
         
         if save_fig == 'y':
-            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/Fractional_signal_uncertainties_{Run}_{HNL_mass}_{name_type}.pdf")
-            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/Fractional_signal_uncertainties_{Run}_{HNL_mass}_{name_type}.png")
+            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/signal/Fractional_signal_uncertainties_{Run}_{HNL_mass}_{name_type}.pdf")
+            plt.savefig(f"plots/BDT_output/Uncertainty_breakdown/signal/Fractional_signal_uncertainties_{Run}_{HNL_mass}_{name_type}.png")
         plt.show()
         
                     

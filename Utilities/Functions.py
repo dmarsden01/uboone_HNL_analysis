@@ -558,6 +558,39 @@ def Flattened_Preselection_weighted_efficiency(samples, cut_dict, Run): #Need to
         Efficiency_dict[sample]=effic_list
         
     return Efficiency_dict, Preselected
+
+def Flattened_Preselection_weighted_numbers(samples, cut_dict, Run, sample_norms): #Need to account for weigthing in overlay and dirt samples
+    """
+    Input dict of flattened dataframes, dict of cuts and Run.
+    Returns the dict of efficiencies and pre-selected samples.
+    """
+    
+    num_dict, Preselected = {}, {}
+    # for sample in samples:
+    for sample in ["overlay","dirtoverlay","beamoff"]:
+        if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+            if Run == "run1":NumEvs = Constants.run1_sum_weights[sample] #This is the total BEFORE any preselection
+            if Run == "run3":NumEvs = Constants.run3_sum_weights[sample]
+        else:
+            if Run == "run1":NumEvs = Constants.run1_event_numbers[sample]
+            if Run == "run3":NumEvs = Constants.run3_event_numbers[sample]
+        
+        scaled_num_evs = NumEvs*sample_norms[sample]
+        effic_list = [scaled_num_evs]
+        Preselected[sample]=samples[sample].copy()
+        for cut in cut_dict.keys():
+            Preselected[sample]=Preselected[sample].query(cut_dict[cut])
+            if sample == "overlay" or sample == "dirtoverlay" or sample in Constants.Detector_variations:
+                unique_placeholder = make_unique_events_df(Preselected[sample])
+                weight = unique_placeholder["weight"]
+                Num_selected = sum(weight)
+            else:
+                unique_placeholder = make_unique_events_df(Preselected[sample])
+                Num_selected = len(unique_placeholder)
+            effic_list.append(Num_selected*sample_norms[sample])
+        num_dict[sample]=effic_list
+        
+    return num_dict, Preselected
     
 def Preselection_DetVars(samples, cut_dict): #Not making efficiency plots for DetVars
     """
