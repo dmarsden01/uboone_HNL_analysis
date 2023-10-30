@@ -311,8 +311,8 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
         # labels=[fr"In-Cryo $\nu$",fr"Out-Cryo $\nu$",f"Beam-Off"]
         sig_label = [HNL_label]
         sig_pi0_label = [HNL_pi0_label]
-        # data_label = f"{Run} NuMI Data"
-        data_label = f"Data"
+        data_label = f"{Run} NuMI Data"
+        # data_label = f"Data"
     
     plt.errorbar(bin_center,dat_val,yerr=dat_err,fmt='.',color='black',lw=5,capsize=5,elinewidth=3,label=data_label) #Plotting data
 
@@ -387,6 +387,7 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     # plt.ylabel(ylabel)
     if isinstance(ylabel, str): plt.ylabel(ylabel)
     if isinstance(legsize, int):
+        # plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols)
         plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols)
     
     # plt.xlabel(xlabel)
@@ -394,7 +395,9 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
     if ylimit != None: plt.ylim(0,ylimit)
     
     if plot_text != None:
-        plt.text(textpos[0],textpos[1], plot_text, fontsize=textsize)
+        # plt.text(textpos[0],textpos[1], plot_text, fontsize=textsize)
+        # plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols, title=plot_text)
+        plt.legend(loc=legloc,frameon=Frame, prop={'size': legsize}, ncols=ncols, title=plot_text, title_fontsize=legsize)
     # plt.text(textpos[0],textpos[1], plot_text)
     
     #---Sub-plot----#
