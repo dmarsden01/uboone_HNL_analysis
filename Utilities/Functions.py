@@ -391,6 +391,9 @@ def Create_extra_swtrig_vars(df):
     return df
 
 def New_load_and_pkl(samples, sample_loc, loc_pkls, common_evs, Params, save_str=""):
+    """
+    Takes the list of samples and the locations of the input .root files and creates the .pkl files.
+    """
     for sample in samples:
         variables = get_vars(sample, Params)
         root_file = uproot3.open(sample_loc[sample])['nuselection/NeutrinoSelectionFilter']

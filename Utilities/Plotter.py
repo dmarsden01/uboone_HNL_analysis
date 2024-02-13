@@ -231,7 +231,9 @@ def Plot_preselection_variable_data(variable, samples=[], sample_norms=[], xlabe
             frac_total += frac_sys**2 #Adding genie and ppfx uncertainties in quadrature
         
         total_frac_sys = np.sqrt(frac_total) #Quadrature sum of the genie and ppfx fractional errors
-        total_sys_err = frac_total*overlaybkg_weighted #Genie and ppfx uncertainty on the overlay
+        # total_sys_err = frac_total*overlaybkg_weighted #Genie and ppfx uncertainty on the overlay. WAS THIS, THINK ITS WRONG. What was used in thesis plots.
+        total_sys_err = total_frac_sys*overlaybkg_weighted #Genie and ppfx uncertainty on the overlay. THINK THIS IS CORRECT. Detector modelling uncertainties aren't accounted for here.
+        # print("Think total sys was wrong here!")
         
         dirt_norm_err_fac = dirt_frac_error #100% dirt normalization uncertainty from Krish "conservative"
         dirt_norm_err=dirtbkg_weighted*dirt_norm_err_fac
@@ -775,7 +777,8 @@ def Plot_significance_scan(variable, Significance_dict_max, Significance_dict_mi
         plt.savefig("plots/Preselection_significances/Significance_scan_"+Params["Run"]+ f"_{variable}.pdf")
     
 
-def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Preselection_signal_min, Preselection_signal_max, log=True):
+def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Preselection_signal_min, Preselection_signal_max, 
+                                 log=True, legloc="best", plot_text=None, legsize=20):
     """
     Input Params, efficiency dict and signal efficiency band dicts.
     Plots and, if savefig==True, will save the efficiency plot.
@@ -800,10 +803,14 @@ def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Pre
     plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Preselection_signal_max,color="darkred",lw=4,marker="")
     plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Preselection_signal_min,color="darkred",lw=4,marker="")
     plt.fill_between(np.array(range(1, len(Efficiency_dict[effic])+1)),Preselection_signal_min,Preselection_signal_max,label="HNL (Range)",color="red")
-    plt.ylabel("Fraction Selected")
+    plt.ylabel("Fraction selected")
     plt.xticks(np.array(range(1, len(Efficiency_dict['overlay'])+1)),["Full sample"]+var_names,rotation=80)
     plt.yscale(logscale)
     plt.legend(loc='lower left',prop={'size': 22})
+    
+    if plot_text != None:
+        plt.legend(loc=legloc, frameon=True, prop={'size': legsize}, title=plot_text, title_fontsize=legsize)
+    else: plt.legend(loc=legloc, frameon=True, prop={'size': legsize})
 
     plt.tight_layout()
     
@@ -814,7 +821,8 @@ def Plot_preselection_efficiency(Params, Preselection_dict, Efficiency_dict, Pre
         plt.savefig("plots/Preselection_efficiencies/Preselection_efficiency_"+Params["Run"]+ f"_{logscale}{weighted_name}.png")
         plt.savefig("plots/Preselection_efficiencies/Preselection_efficiency_"+Params["Run"]+ f"_{logscale}{weighted_name}.pdf")
         
-def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_signal_wrt_prev, highest_signal_wrt_prev):
+def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_signal_wrt_prev, highest_signal_wrt_prev, 
+                            legloc="best", plot_text=None, legsize=20):
     """
     Input Params, efficiency dict and low and high signal effic lists (wrt prev step).
     Plots the efficiencies wrt the previous step.
@@ -855,8 +863,12 @@ def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_si
     plt.fill_between(edges_low, hist_low, hist_high, color='red', label="HNL (Range)")
 
     plt.xticks(bin_cents,var_names,rotation=80)
-    plt.ylabel("Fraction Selected \n wrt previous")
+    plt.ylabel("Fraction selected \n wrt previous")
     plt.legend(loc='best',prop={'size': 16})
+    
+    if plot_text != None:
+        plt.legend(loc=legloc, frameon=True, prop={'size': legsize}, title=plot_text, title_fontsize=legsize)
+    else: plt.legend(loc=legloc, frameon=True, prop={'size': legsize})
 
     plt.tight_layout()
     
@@ -867,7 +879,7 @@ def Plot_effic_wrt_previous(Params, Preselection_dict, effic_wrt_prev, lowest_si
         plt.savefig("plots/Preselection_efficiencies/Efficiency_wrt_previous_"+Params["Run"]+ f"_{weighted_name}.png")
         plt.savefig("plots/Preselection_efficiencies/Efficiency_wrt_previous_"+Params["Run"]+ f"_{weighted_name}.pdf")
         
-def Plot_preselection_numbers(Params, Preselection_dict, Efficiency_dict, log=True):
+def Plot_preselection_numbers(Params, Preselection_dict, Efficiency_dict, log=True, legloc="best", plot_text=None, legsize=20):
     """
     Input Params, number dict and signal efficiency band dicts.
     Plots and, if savefig==True, will save the efficiency plot.
@@ -889,11 +901,15 @@ def Plot_preselection_numbers(Params, Preselection_dict, Efficiency_dict, log=Tr
     for effic in plotting_effic_dict:
         plt.plot(np.array(range(1, len(Efficiency_dict[effic])+1)),Efficiency_dict[effic],label=label_effic_dict[effic],color=plotting_effic_colours[effic],lw=4,markersize=15)
 
-    plt.ylabel("Events Selected")
+    plt.ylabel("Events selected")
     plt.xticks(np.array(range(1, len(Efficiency_dict['overlay'])+1)),["Full sample"]+var_names,rotation=80)
     plt.yscale(logscale)
     plt.legend(loc='lower left',prop={'size': 22})
-
+    
+    if plot_text != None:
+        # plt.legend(loc=legloc,frameon=True, prop={'size': legsize}, ncols=ncols, title=plot_text, title_fontsize=legsize)
+        plt.legend(loc=legloc, frameon=True, prop={'size': legsize}, title=plot_text, title_fontsize=legsize)
+    else: plt.legend(loc=legloc, frameon=True, prop={'size': legsize})
     plt.tight_layout()
     
     save_fig = input("Do you want to save the figure? y/n ")

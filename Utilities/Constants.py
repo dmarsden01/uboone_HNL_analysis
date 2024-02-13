@@ -306,7 +306,8 @@ run1_pi0_file_loc_dict = {"150_pi0": '../NuMI_signal/KDAR_dump/sfnues/pi0/sfnues
 #------Plotting related constants------#
 #--------------------------------------#
 
-sample_colours = {'overlay':'mediumblue',
+sample_colours = {#'overlay':'mediumblue', #Initially used this colour, but it was too dark to easily make out black data points over the top
+                  'overlay':'#0254cf',
                   'dirtoverlay':'cornflowerblue',
                   'beamoff':'limegreen',
                   'signal':'red',
