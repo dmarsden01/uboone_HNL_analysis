@@ -14,3 +14,6 @@ limit_files/
 pkl_files/
 reco2_script_output/
 *:memory:*
+limits/
+observed_data/
+jsons/
